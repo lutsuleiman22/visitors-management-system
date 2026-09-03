@@ -7,6 +7,7 @@ namespace common\models;
 use Yii;
 use yii\base\NotSupportedException;
 use yii\behaviors\TimestampBehavior;
+use yii\db\ActiveQuery;
 use yii\db\ActiveRecord;
 use yii\web\IdentityInterface;
 
@@ -24,6 +25,7 @@ use yii\web\IdentityInterface;
  * @property int $created_at
  * @property int $updated_at
  * @property string $password write-only password
+ * @property Visit[] $visits
  */
 class User extends ActiveRecord implements IdentityInterface
 {
@@ -214,5 +216,13 @@ class User extends ActiveRecord implements IdentityInterface
     public function removePasswordResetToken(): void
     {
         $this->password_reset_token = null;
+    }
+
+    /**
+     * Visits hosted by this user.
+     */
+    public function getVisits(): ActiveQuery
+    {
+        return $this->hasMany(Visit::class, ['host_user_id' => 'id']);
     }
 }

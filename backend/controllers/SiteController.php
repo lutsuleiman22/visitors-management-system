@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace backend\controllers;
 
 use common\models\LoginForm;
+use common\models\Visit;
 use Yii;
 use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
@@ -59,13 +60,38 @@ class SiteController extends Controller
     }
 
     /**
-     * Displays homepage.
+     * Admin / receptionist dashboard with live visit stats.
      *
      * @return string
      */
     public function actionIndex(): string
     {
-        return $this->render('index');
+        $todayStart = date('Y-m-d 00:00:00');
+
+        $totalVisitsToday = (int) Visit::find()
+            ->where(['>=', 'check_in_time', $todayStart])
+            ->count();
+
+        $currentlyInside = (int) Visit::find()
+            ->where(['check_out_time' => null])
+            ->count();
+
+        $totalCheckedOut = (int) Visit::find()
+            ->where(['not', ['check_out_time' => null]])
+            ->count();
+
+        $recentVisits = Visit::find()
+            ->with(['visitor', 'host'])
+            ->orderBy(['id' => SORT_DESC])
+            ->limit(8)
+            ->all();
+
+        return $this->render('index', [
+            'totalVisitsToday' => $totalVisitsToday,
+            'currentlyInside' => $currentlyInside,
+            'totalCheckedOut' => $totalCheckedOut,
+            'recentVisits' => $recentVisits,
+        ]);
     }
 
     /**

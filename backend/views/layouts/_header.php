@@ -10,8 +10,18 @@ use yii\helpers\Html;
 
 $items = [
     [
-        'label' => 'Home',
+        'label' => 'Dashboard',
         'url' => ['/site/index'],
+    ],
+    [
+        'label' => 'Visits',
+        'url' => ['/visit/index'],
+        'visible' => !Yii::$app->user->isGuest,
+    ],
+    [
+        'label' => 'Evacuation',
+        'url' => ['/visit/evacuation'],
+        'visible' => !Yii::$app->user->isGuest,
     ],
     [
         'label' => 'Login',

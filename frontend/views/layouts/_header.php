@@ -14,6 +14,14 @@ $items = [
         'url' => ['/site/index'],
     ],
     [
+        'label' => 'Check-In',
+        'url' => ['/visitor/check-in'],
+    ],
+    [
+        'label' => 'Check-Out',
+        'url' => ['/visitor/check-out'],
+    ],
+    [
         'label' => 'About',
         'url' => ['/site/about'],
     ],
