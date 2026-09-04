@@ -14,13 +14,16 @@ use yii\data\ActiveDataProvider;
 class VisitSearch extends Visit
 {
     public string|null $visitor_name = null;
+    public string|null $visitor_phone = null;
     public string|null $host_username = null;
+    public string $active_only = '0';
 
     public function rules(): array
     {
         return [
             [['id', 'visitor_id', 'host_user_id'], 'integer'],
-            [['purpose', 'qr_code_hash', 'status', 'visitor_name', 'host_username'], 'safe'],
+            [['purpose', 'from_location', 'destination', 'qr_code_hash', 'visitor_pass_number', 'status', 'visitor_name', 'visitor_phone', 'host_username'], 'safe'],
+            [['active_only'], 'in', 'range' => ['0', '1']],
         ];
     }
 
@@ -33,7 +36,9 @@ class VisitSearch extends Visit
     {
         return array_merge(parent::attributeLabels(), [
             'visitor_name' => 'Visitor',
+            'visitor_phone' => 'Phone',
             'host_username' => 'Host',
+            'active_only' => 'Active Visits',
         ]);
     }
 
@@ -41,7 +46,7 @@ class VisitSearch extends Visit
     {
         $query = Visit::find()
             ->alias('v')
-            ->joinWith(['visitor visitor', 'host host']);
+            ->joinWith(['visitor', 'host host']);
 
         $dataProvider = new ActiveDataProvider([
             'query' => $query,
@@ -52,13 +57,20 @@ class VisitSearch extends Visit
                     'visitor_id',
                     'host_user_id',
                     'purpose',
+                    'from_location',
+                    'destination',
+                    'visitor_pass_number',
                     'status',
                     'check_in_time',
                     'check_out_time',
                     'created_at',
                     'visitor_name' => [
-                        'asc' => ['visitor.full_name' => SORT_ASC],
-                        'desc' => ['visitor.full_name' => SORT_DESC],
+                        'asc' => ['visitors.full_name' => SORT_ASC],
+                        'desc' => ['visitors.full_name' => SORT_DESC],
+                    ],
+                    'visitor_phone' => [
+                        'asc' => ['visitors.phone_number' => SORT_ASC],
+                        'desc' => ['visitors.phone_number' => SORT_DESC],
                     ],
                     'host_username' => [
                         'asc' => ['host.username' => SORT_ASC],
@@ -87,8 +99,20 @@ class VisitSearch extends Visit
 
         $query->andFilterWhere(['like', 'v.purpose', $this->purpose])
             ->andFilterWhere(['like', 'v.qr_code_hash', $this->qr_code_hash])
-            ->andFilterWhere(['like', 'visitor.full_name', $this->visitor_name])
+            ->andFilterWhere(['like', 'visitors.full_name', $this->visitor_name])
+            ->andFilterWhere(['like', 'visitors.phone_number', $this->visitor_phone])
+            ->andFilterWhere(['like', 'v.visitor_pass_number', $this->visitor_pass_number])
+            ->andFilterWhere(['like', 'v.from_location', $this->from_location])
+            ->andFilterWhere(['like', 'v.destination', $this->destination])
             ->andFilterWhere(['like', 'host.username', $this->host_username]);
+
+        if ($this->active_only === '1') {
+            $query->andWhere([
+                'and',
+                ['v.status' => Visit::STATUS_CHECKED_IN],
+                ['v.check_out_time' => null],
+            ]);
+        }
 
         return $dataProvider;
     }

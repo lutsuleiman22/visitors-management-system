@@ -4,19 +4,22 @@ declare(strict_types=1);
 
 namespace backend\controllers;
 
+use backend\components\BaseController;
 use common\models\LoginForm;
-use common\models\Visit;
+use common\models\User;
+use common\services\AuditLogService;
+use common\services\NotificationService;
 use Yii;
 use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
-use yii\web\Controller;
 use yii\web\ErrorAction;
+use yii\web\ForbiddenHttpException;
 use yii\web\Response;
 
 /**
  * Site controller
  */
-class SiteController extends Controller
+class SiteController extends BaseController
 {
     /**
      * {@inheritdoc}
@@ -64,34 +67,20 @@ class SiteController extends Controller
      *
      * @return string
      */
-    public function actionIndex(): string
+    public function actionIndex(): string|Response
     {
-        $todayStart = date('Y-m-d 00:00:00');
+        $role = (string) Yii::$app->user->identity->role;
+        if ($role === User::ROLE_ADMIN) {
+            return $this->redirect(['/admin/dashboard']);
+        }
+        if ($role === User::ROLE_RECEPTION) {
+            return $this->redirect(['/reception/dashboard']);
+        }
+        if ($role === User::ROLE_SECURITY) {
+            return $this->redirect(['/security/dashboard']);
+        }
 
-        $totalVisitsToday = (int) Visit::find()
-            ->where(['>=', 'check_in_time', $todayStart])
-            ->count();
-
-        $currentlyInside = (int) Visit::find()
-            ->where(['check_out_time' => null])
-            ->count();
-
-        $totalCheckedOut = (int) Visit::find()
-            ->where(['not', ['check_out_time' => null]])
-            ->count();
-
-        $recentVisits = Visit::find()
-            ->with(['visitor', 'host'])
-            ->orderBy(['id' => SORT_DESC])
-            ->limit(8)
-            ->all();
-
-        return $this->render('index', [
-            'totalVisitsToday' => $totalVisitsToday,
-            'currentlyInside' => $currentlyInside,
-            'totalCheckedOut' => $totalCheckedOut,
-            'recentVisits' => $recentVisits,
-        ]);
+        throw new ForbiddenHttpException('You are not authorized to access the backend dashboard.');
     }
 
     /**
@@ -109,7 +98,15 @@ class SiteController extends Controller
 
         $model = new LoginForm();
         if ($model->load(Yii::$app->request->post()) && $model->login()) {
-            return $this->goBack();
+            AuditLogService::logAction('login', 'User logged in successfully.');
+            NotificationService::createNotification('New login: ' . Yii::$app->user->identity->username, 'info', (int) Yii::$app->user->id);
+            $role = (string) Yii::$app->user->identity->role;
+            return match ($role) {
+                User::ROLE_ADMIN => $this->redirect(['/admin/dashboard']),
+                User::ROLE_RECEPTION => $this->redirect(['/reception/dashboard']),
+                User::ROLE_SECURITY => $this->redirect(['/security/dashboard']),
+                default => $this->redirect(['/site/index']),
+            };
         }
 
         $model->password = '';

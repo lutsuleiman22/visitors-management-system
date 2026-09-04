@@ -13,13 +13,29 @@ use yii\helpers\Html;
 
 $this->title = 'Visits';
 $this->params['breadcrumbs'][] = $this->title;
+$identity = Yii::$app->user->identity;
+$role = '';
+if ($identity !== null) {
+    if (method_exists($identity, 'getRole')) {
+        $role = (string) $identity->getRole();
+    } elseif (array_key_exists('role', $identity->attributes)) {
+        $role = (string) $identity->attributes['role'];
+    }
+}
+$role = strtolower(trim($role));
+$canCreate = in_array($role, ['admin', 'reception'], true);
+$canUpdate = $role === 'admin';
+$canDelete = $role === 'admin';
+$canCheckOut = in_array($role, ['admin', 'reception'], true);
 ?>
 <div class="visit-index">
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
         <h1 class="h3 mb-0"><?= Html::encode($this->title) ?></h1>
         <div class="d-flex flex-wrap gap-2">
             <?= Html::a('Evacuation List', ['evacuation'], ['class' => 'btn btn-warning']) ?>
-            <?= Html::a('Create Visit', ['create'], ['class' => 'btn btn-success']) ?>
+            <?php if ($canCreate): ?>
+                <?= Html::a('Create Visit', ['create'], ['class' => 'btn btn-success']) ?>
+            <?php endif; ?>
         </div>
     </div>
 
@@ -36,11 +52,18 @@ $this->params['breadcrumbs'][] = $this->title;
                 'value' => static fn (Visit $model): string => $model->visitor->full_name ?? '—',
             ],
             [
+                'attribute' => 'visitor_phone',
+                'label' => 'Phone',
+                'value' => static fn (Visit $model): string => $model->visitor->phone_number ?? '—',
+            ],
+            [
                 'attribute' => 'host_username',
                 'label' => 'Host',
                 'value' => static fn (Visit $model): string => $model->host->username ?? '—',
             ],
             'purpose',
+            'from_location',
+            'visitor_pass_number',
             [
                 'attribute' => 'status',
                 'filter' => Visit::statusList(),
@@ -52,11 +75,17 @@ $this->params['breadcrumbs'][] = $this->title;
                     ]);
                 },
             ],
+            [
+                'attribute' => 'active_only',
+                'filter' => ['0' => 'All visits', '1' => 'Active only'],
+                'value' => static fn (Visit $model): string => $model->isCheckedIn() ? 'Yes' : 'No',
+                'contentOptions' => ['class' => 'text-center'],
+            ],
             'check_in_time',
             'check_out_time',
             [
                 'class' => ActionColumn::class,
-                'template' => '{view} {update} {check-out} {delete}',
+                'template' => '{view}' . ($canUpdate ? ' {update}' : '') . ($canCheckOut ? ' {check-out}' : '') . ($canDelete ? ' {delete}' : ''),
                 'buttons' => [
                     'check-out' => static function (string $url, Visit $model): string {
                         if (!$model->isCheckedIn()) {
@@ -66,7 +95,7 @@ $this->params['breadcrumbs'][] = $this->title;
                             'class' => 'btn btn-sm btn-outline-danger',
                             'data' => [
                                 'method' => 'post',
-                                'confirm' => 'Check out this visitor?',
+                                'confirm' => 'Are you sure you want to check out this visitor?',
                             ],
                         ]);
                     },

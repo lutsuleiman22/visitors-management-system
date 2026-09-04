@@ -11,13 +11,28 @@ use yii\widgets\DetailView;
 $this->title = 'Visit #' . $model->id;
 $this->params['breadcrumbs'][] = ['label' => 'Visits', 'url' => ['index']];
 $this->params['breadcrumbs'][] = $this->title;
+$identity = Yii::$app->user->identity;
+$role = '';
+if ($identity !== null) {
+    if (method_exists($identity, 'getRole')) {
+        $role = (string) $identity->getRole();
+    } elseif (array_key_exists('role', $identity->attributes)) {
+        $role = (string) $identity->attributes['role'];
+    }
+}
+$role = strtolower(trim($role));
+$canEdit = $role === 'admin';
+$canDelete = $role === 'admin';
+$canCheckOut = in_array($role, ['admin', 'reception'], true);
 ?>
 <div class="visit-view">
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
         <h1 class="h3 mb-0"><?= Html::encode($this->title) ?></h1>
         <div class="d-flex flex-wrap gap-2">
-            <?= Html::a('Update', ['update', 'id' => $model->id], ['class' => 'btn btn-primary']) ?>
-            <?php if ($model->isCheckedIn()): ?>
+            <?php if ($canEdit): ?>
+                <?= Html::a('Update', ['update', 'id' => $model->id], ['class' => 'btn btn-primary']) ?>
+            <?php endif; ?>
+            <?php if ($canCheckOut && $model->isCheckedIn()): ?>
                 <?= Html::a('Check-Out', ['check-out', 'id' => $model->id], [
                     'class' => 'btn btn-warning',
                     'data' => [
@@ -26,13 +41,15 @@ $this->params['breadcrumbs'][] = $this->title;
                     ],
                 ]) ?>
             <?php endif; ?>
-            <?= Html::a('Delete', ['delete', 'id' => $model->id], [
+            <?php if ($canDelete): ?>
+                <?= Html::a('Delete', ['delete', 'id' => $model->id], [
                 'class' => 'btn btn-danger',
                 'data' => [
                     'confirm' => 'Are you sure you want to delete this visit?',
                     'method' => 'post',
                 ],
-            ]) ?>
+                ]) ?>
+            <?php endif; ?>
         </div>
     </div>
 

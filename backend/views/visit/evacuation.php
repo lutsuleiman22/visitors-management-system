@@ -15,6 +15,17 @@ $this->title = 'Evacuation List';
 $this->params['breadcrumbs'][] = ['label' => 'Visits', 'url' => ['index']];
 $this->params['breadcrumbs'][] = $this->title;
 
+$identity = Yii::$app->user->identity;
+$role = '';
+if ($identity !== null) {
+    if (method_exists($identity, 'getRole')) {
+        $role = (string) $identity->getRole();
+    } elseif (array_key_exists('role', $identity->attributes)) {
+        $role = (string) $identity->attributes['role'];
+    }
+}
+$canCheckOut = in_array(strtolower(trim($role)), ['admin', 'reception'], true);
+
 $this->registerMetaTag([
     'http-equiv' => 'refresh',
     'content' => '30',
@@ -65,7 +76,7 @@ $this->registerMetaTag([
             'check_in_time',
             [
                 'class' => 'yii\grid\ActionColumn',
-                'template' => '{check-out}',
+                'template' => $canCheckOut ? '{check-out}' : '',
                 'contentOptions' => ['class' => 'd-print-none'],
                 'headerOptions' => ['class' => 'd-print-none'],
                 'buttons' => [

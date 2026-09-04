@@ -7,21 +7,63 @@ declare(strict_types=1);
 use yii\bootstrap5\Nav;
 use yii\bootstrap5\NavBar;
 use yii\helpers\Html;
+use common\services\NotificationService;
+
+$identity = Yii::$app->user->identity;
+$role = $identity === null ? '' : (string) $identity->role;
+$isAdmin = $role === 'admin';
+$isReception = $role === 'reception';
+$isSecurity = $role === 'security';
+$unreadNotifications = !Yii::$app->user->isGuest
+    ? NotificationService::unreadCount((int) Yii::$app->user->id)
+    : 0;
 
 $items = [
     [
-        'label' => 'Dashboard',
-        'url' => ['/site/index'],
+        'label' => $isAdmin ? 'Admin Dashboard' : ($isReception ? 'Reception Dashboard' : 'Security Dashboard'),
+        'url' => $isAdmin ? ['/admin/dashboard'] : ($isReception ? ['/reception/dashboard'] : ['/security/dashboard']),
+        'visible' => !Yii::$app->user->isGuest && ($isAdmin || $isReception || $isSecurity),
     ],
     [
-        'label' => 'Visits',
+        'label' => 'Visitor List',
         'url' => ['/visit/index'],
-        'visible' => !Yii::$app->user->isGuest,
+        'visible' => $isAdmin || $isReception,
     ],
     [
-        'label' => 'Evacuation',
+        'label' => 'Check-Out / Active Visitors',
         'url' => ['/visit/evacuation'],
-        'visible' => !Yii::$app->user->isGuest,
+        'visible' => $isAdmin || $isSecurity,
+    ],
+    [
+        'label' => 'Users',
+        'url' => ['/user/index'],
+        'visible' => $isAdmin,
+    ],
+    [
+        'label' => 'Reports',
+        'url' => ['/admin/reports'],
+        'visible' => $isAdmin,
+    ],
+    [
+        'label' => 'Analytics',
+        'url' => ['/dashboard/analytics'],
+        'visible' => $isAdmin,
+    ],
+    [
+        'label' => 'Add Visitor',
+        'url' => ['/visit/create'],
+        'visible' => $isReception || $isAdmin,
+    ],
+    [
+        'label' => 'Active Visitors',
+        'url' => ['/visit/evacuation'],
+        'visible' => $isSecurity,
+    ],
+    [
+        'label' => 'Notifications' . ($unreadNotifications > 0 ? ' <span class="badge text-bg-danger">' . $unreadNotifications . '</span>' : ''),
+        'url' => ['/notification/index'],
+        'encode' => false,
+        'visible' => $isAdmin || $isReception || $isSecurity,
     ],
     [
         'label' => 'Login',

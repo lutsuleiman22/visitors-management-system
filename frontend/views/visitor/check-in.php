@@ -18,7 +18,7 @@ $this->params['breadcrumbs'][] = $this->title;
             <div class="card border-0 shadow-sm rounded-3">
                 <div class="card-header bg-primary text-white py-3">
                     <h1 class="h4 mb-0"><?= Html::encode($this->title) ?></h1>
-                    <p class="mb-0 small opacity-75">Complete the form, select your host, and capture a photo.</p>
+                    <p class="mb-0 small opacity-75">Complete the visitor details and sign below.</p>
                 </div>
                 <div class="card-body p-4">
                     <?php $form = ActiveForm::begin([
@@ -26,52 +26,9 @@ $this->params['breadcrumbs'][] = $this->title;
                         'options' => ['autocomplete' => 'off'],
                     ]); ?>
 
-                    <div class="row g-4">
-                        <div class="col-md-6">
-                            <?= $form->field($model, 'full_name')->textInput([
-                                'maxlength' => true,
-                                'placeholder' => 'e.g. Jane Doe',
-                                'autofocus' => true,
-                            ]) ?>
+                    <?= $form->errorSummary($model, ['class' => 'alert alert-danger']) ?>
 
-                            <?= $form->field($model, 'phone_number')->textInput([
-                                'maxlength' => true,
-                                'placeholder' => 'e.g. +1 555 0100',
-                            ]) ?>
-
-                            <?= $form->field($model, 'national_id')->textInput([
-                                'maxlength' => true,
-                                'placeholder' => 'National ID / Passport',
-                            ]) ?>
-
-                            <?= $form->field($model, 'host_user_id')->dropDownList($hosts, [
-                                'prompt' => 'Select host…',
-                            ]) ?>
-
-                            <?= $form->field($model, 'purpose')->textarea([
-                                'rows' => 3,
-                                'placeholder' => 'Brief reason for your visit',
-                            ]) ?>
-                        </div>
-
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Webcam Photo <span class="text-danger">*</span></label>
-                            <div class="webcam-panel border rounded-3 p-3 bg-body-tertiary">
-                                <div class="ratio ratio-4x3 mb-3 bg-dark rounded overflow-hidden">
-                                    <video id="webcam" autoplay playsinline muted class="w-100 h-100" style="object-fit: cover;"></video>
-                                    <canvas id="photo-canvas" class="d-none"></canvas>
-                                    <img id="photo-preview" alt="Captured photo" class="d-none w-100 h-100" style="object-fit: cover;">
-                                </div>
-                                <div class="d-flex flex-wrap gap-2 mb-2">
-                                    <button type="button" id="btn-start-camera" class="btn btn-outline-secondary btn-sm">Start Camera</button>
-                                    <button type="button" id="btn-capture" class="btn btn-primary btn-sm" disabled>Capture Photo</button>
-                                    <button type="button" id="btn-retake" class="btn btn-outline-warning btn-sm d-none">Retake</button>
-                                </div>
-                                <div id="camera-status" class="small text-body-secondary">Click “Start Camera” and allow browser access.</div>
-                            </div>
-                            <?= $form->field($model, 'photo_data')->hiddenInput(['id' => 'photo-data'])->label(false) ?>
-                        </div>
-                    </div>
+                    <?= $this->render('_form', ['form' => $form, 'model' => $model, 'hosts' => $hosts]) ?>
 
                     <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
                         <?= Html::a('Check-Out Instead', ['check-out'], ['class' => 'btn btn-link']) ?>
@@ -91,82 +48,41 @@ $this->params['breadcrumbs'][] = $this->title;
 <?php
 $js = <<<'JS'
 (function () {
-    const video = document.getElementById('webcam');
-    const canvas = document.getElementById('photo-canvas');
-    const preview = document.getElementById('photo-preview');
-    const photoData = document.getElementById('photo-data');
-    const statusEl = document.getElementById('camera-status');
-    const btnStart = document.getElementById('btn-start-camera');
-    const btnCapture = document.getElementById('btn-capture');
-    const btnRetake = document.getElementById('btn-retake');
-    let stream = null;
+    const canvas = document.getElementById('signature-canvas');
+    const context = canvas.getContext('2d');
+    const signatureData = document.getElementById('checkinform-signature_data');
+    const form = document.getElementById('check-in-form');
+    let drawing = false;
+    let hasSignature = false;
 
-    function setStatus(message, isError) {
-        statusEl.textContent = message;
-        statusEl.className = 'small ' + (isError ? 'text-danger' : 'text-body-secondary');
+    function position(event) {
+        const point = event.touches ? event.touches[0] : event;
+        const bounds = canvas.getBoundingClientRect();
+        return { x: (point.clientX - bounds.left) * canvas.width / bounds.width, y: (point.clientY - bounds.top) * canvas.height / bounds.height };
     }
 
-    async function startCamera() {
-        try {
-            stream = await navigator.mediaDevices.getUserMedia({
-                video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } },
-                audio: false
-            });
-            video.srcObject = stream;
-            video.classList.remove('d-none');
-            preview.classList.add('d-none');
-            btnCapture.disabled = false;
-            btnRetake.classList.add('d-none');
-            setStatus('Camera ready. Position your face and click Capture Photo.');
-        } catch (err) {
-            setStatus('Unable to access camera: ' + err.message, true);
-        }
-    }
+    function start(event) { drawing = true; context.beginPath(); context.moveTo(position(event).x, position(event).y); event.preventDefault(); }
+    function draw(event) { if (!drawing) return; const point = position(event); context.lineTo(point.x, point.y); context.stroke(); hasSignature = true; event.preventDefault(); }
+    function stop() { drawing = false; }
 
-    function stopCamera() {
-        if (stream) {
-            stream.getTracks().forEach(function (track) { track.stop(); });
-            stream = null;
-        }
-    }
-
-    function capturePhoto() {
-        const width = video.videoWidth || 640;
-        const height = video.videoHeight || 480;
-        canvas.width = width;
-        canvas.height = height;
-        canvas.getContext('2d').drawImage(video, 0, 0, width, height);
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
-        photoData.value = dataUrl;
-        preview.src = dataUrl;
-        preview.classList.remove('d-none');
-        video.classList.add('d-none');
-        btnCapture.disabled = true;
-        btnRetake.classList.remove('d-none');
-        stopCamera();
-        setStatus('Photo captured. You can retake if needed, then submit the form.');
-    }
-
-    function retake() {
-        photoData.value = '';
-        preview.classList.add('d-none');
-        preview.removeAttribute('src');
-        video.classList.remove('d-none');
-        startCamera();
-    }
-
-    btnStart.addEventListener('click', startCamera);
-    btnCapture.addEventListener('click', capturePhoto);
-    btnRetake.addEventListener('click', retake);
-
-    document.getElementById('check-in-form').addEventListener('submit', function (e) {
-        if (!photoData.value) {
-            e.preventDefault();
-            setStatus('Please capture a photo before submitting.', true);
-        }
+    context.lineWidth = 2;
+    context.lineCap = 'round';
+    context.strokeStyle = '#17202a';
+    canvas.addEventListener('pointerdown', start);
+    canvas.addEventListener('pointermove', draw);
+    canvas.addEventListener('pointerup', stop);
+    canvas.addEventListener('pointerleave', stop);
+    document.getElementById('clear-signature').addEventListener('click', function () {
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        signatureData.value = '';
+        hasSignature = false;
     });
-
-    window.addEventListener('beforeunload', stopCamera);
+    form.addEventListener('submit', function (event) {
+        if (hasSignature) {
+            signatureData.value = canvas.toDataURL('image/png');
+        }
+        if (!hasSignature || !signatureData.value) { event.preventDefault(); document.getElementById('signature-status').textContent = 'Please provide a signature.'; }
+    });
 })();
 JS;
 $this->registerJs($js);

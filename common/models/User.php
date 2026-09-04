@@ -21,6 +21,7 @@ use yii\web\IdentityInterface;
  * @property string $verification_token
  * @property string $email
  * @property string $auth_key
+ * @property string $role
  * @property int $status
  * @property int $created_at
  * @property int $updated_at
@@ -32,6 +33,11 @@ class User extends ActiveRecord implements IdentityInterface
     public const STATUS_DELETED = 0;
     public const STATUS_INACTIVE = 9;
     public const STATUS_ACTIVE = 10;
+
+    public const ROLE_ADMIN = 'admin';
+    public const ROLE_RECEPTION = 'reception';
+    public const ROLE_SECURITY = 'security';
+    public const ROLE_USER = 'user';
     /**
      * {@inheritdoc}
      */
@@ -58,6 +64,16 @@ class User extends ActiveRecord implements IdentityInterface
         return [
             ['status', 'default', 'value' => self::STATUS_INACTIVE],
             ['status', 'in', 'range' => [self::STATUS_ACTIVE, self::STATUS_INACTIVE, self::STATUS_DELETED]],
+            [['username', 'email'], 'required'],
+            [['username', 'email'], 'string', 'max' => 255],
+            ['role', 'string', 'max' => 20],
+            ['role', 'default', 'value' => self::ROLE_USER],
+            ['role', 'in', 'range' => [
+                self::ROLE_ADMIN,
+                self::ROLE_RECEPTION,
+                self::ROLE_SECURITY,
+                self::ROLE_USER,
+            ]],
         ];
     }
 
@@ -147,6 +163,37 @@ class User extends ActiveRecord implements IdentityInterface
     public function getId(): int
     {
         return $this->getPrimaryKey();
+    }
+
+    public function getRole(): string
+    {
+        return (string) $this->getAttribute('role');
+    }
+
+    /** @return array<string, string> */
+    public static function roleList(): array
+    {
+        return [
+            self::ROLE_ADMIN => 'Admin',
+            self::ROLE_RECEPTION => 'Reception',
+            self::ROLE_SECURITY => 'Security',
+            self::ROLE_USER => 'User',
+        ];
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->getRole() === self::ROLE_ADMIN;
+    }
+
+    public function isReception(): bool
+    {
+        return $this->getRole() === self::ROLE_RECEPTION;
+    }
+
+    public function isSecurity(): bool
+    {
+        return $this->getRole() === self::ROLE_SECURITY;
     }
 
     /**

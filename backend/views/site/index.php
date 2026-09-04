@@ -13,6 +13,7 @@ use yii\helpers\Html;
 
 $this->title = 'Dashboard';
 $username = Yii::$app->user->identity?->username;
+$role = (string) Yii::$app->user->identity?->role;
 ?>
 <div class="site-index">
     <div class="dashboard-banner text-white rounded-4 p-4 p-lg-5 mb-4">
@@ -24,8 +25,12 @@ $username = Yii::$app->user->identity?->username;
                 </p>
             </div>
             <div class="col-lg-4 text-lg-end mt-3 mt-lg-0 d-flex flex-wrap gap-2 justify-content-lg-end">
-                <?= Html::a('Manage Visits', ['/visit/index'], ['class' => 'btn btn-light']) ?>
-                <?= Html::a('Evacuation List', ['/visit/evacuation'], ['class' => 'btn btn-warning']) ?>
+                <?php if ($role === 'admin' || $role === 'reception'): ?>
+                    <?= Html::a('Manage Visits', ['/visit/index'], ['class' => 'btn btn-light']) ?>
+                <?php endif; ?>
+                <?php if ($role === 'admin' || $role === 'security'): ?>
+                    <?= Html::a('Active Visitors', ['/visit/evacuation'], ['class' => 'btn btn-warning']) ?>
+                <?php endif; ?>
             </div>
         </div>
     </div>

@@ -150,9 +150,27 @@ class Visit extends ActiveRecord
             return false;
         }
 
-        $this->status = self::STATUS_CHECKED_OUT;
-        $this->check_out_time = date('Y-m-d H:i:s');
+        $checkOutTime = date('Y-m-d H:i:s');
+        $updated = static::updateAll(
+            [
+                'status' => self::STATUS_CHECKED_OUT,
+                'check_out_time' => $checkOutTime,
+            ],
+            [
+                'and',
+                ['id' => $this->id],
+                ['status' => self::STATUS_CHECKED_IN],
+                ['check_out_time' => null],
+            ],
+        );
 
-        return $this->save(false);
+        if ($updated !== 1) {
+            return false;
+        }
+
+        $this->status = self::STATUS_CHECKED_OUT;
+        $this->check_out_time = $checkOutTime;
+
+        return true;
     }
 }
