@@ -11,8 +11,8 @@ use yii\bootstrap5\Html;
 
 $this->title = 'Login to your account';
 $this->params['breadcrumbs'][] = $this->title;
-$this->params['meta_description'] = 'Log in to access your Yii2 application account.';
-$this->params['meta_keywords'] = 'yii, yii2, login, sign in, authentication';
+$this->params['meta_description'] = 'Log in to access your Man Creative Visitor System account.';
+$this->params['meta_keywords'] = 'visitor system, login, sign in, authentication';
 $htmlIcon = <<<HTML
 {label}<div class="input-group"><span class="input-group-text" aria-hidden="true">%s</span>{input}</div>{error}{hint}
 HTML;
@@ -40,7 +40,7 @@ $labelOptions = ['class' => 'form-label fw-semibold small'];
                             Welcome<br>Back
                         </h2>
                         <p class="opacity-75 mb-0 login-brand-text">
-                            Log in to access your Yii2 application and manage your account.
+                            Log in to access your Man Creative Visitor System and manage your account.
                         </p>
                     </div>
                 </div>
