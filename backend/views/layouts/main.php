@@ -33,7 +33,7 @@ $this->render('_head');
     <aside id="backend-sidebar" class="backend-sidebar" aria-label="Primary navigation">
         <div class="sidebar-brand">
             <span class="sidebar-mark">VM</span>
-            <div><strong>Visitor Desk</strong><small>Operations portal</small></div>
+            <div><strong>Man Creative Visitor System</strong><small>Operations portal</small></div>
         </div>
         <div class="sidebar-section-label">Workspace</div>
         <nav class="sidebar-nav">

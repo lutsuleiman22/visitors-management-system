@@ -13,6 +13,7 @@ $role = $identity === null ? '' : (string) $identity->role;
 $isAdmin = $role === 'admin';
 $isReception = $role === 'reception';
 $isSecurity = $role === 'security';
+$frontendBaseUrl = str_replace('/backend/web', '/frontend/web', rtrim(Yii::$app->request->baseUrl, '/'));
 $unreadNotifications = !Yii::$app->user->isGuest
     ? NotificationService::unreadCount((int) Yii::$app->user->id)
     : 0;
@@ -35,7 +36,7 @@ if (!Yii::$app->user->isGuest && ($isAdmin || $isReception || $isSecurity)) {
 <header id="header" class="backend-topbar">
     <div class="topbar-left">
         <?= Html::button('Menu', ['id' => 'sidebar-toggle', 'class' => 'btn btn-sm btn-outline-secondary d-md-none', 'aria-label' => 'Open navigation']) ?>
-        <?= Html::a(Yii::$app->name, ['/site/index'], ['class' => 'topbar-brand']) ?>
+        <?= Html::a('Man Creative Visitor System', ['/site/index'], ['class' => 'topbar-brand']) ?>
         <span class="topbar-context">Visitor management</span>
     </div>
     <div class="topbar-actions">
@@ -54,6 +55,7 @@ if (!Yii::$app->user->isGuest && ($isAdmin || $isReception || $isSecurity)) {
             </div>
         <?php endif; ?>
         <?= Html::button('Theme', ['id' => 'theme-toggle', 'class' => 'btn btn-sm btn-outline-secondary', 'aria-label' => 'Switch color theme']) ?>
+        <?= Html::a('Visitor Site', $frontendBaseUrl . '/index.php/site/index', ['class' => 'btn btn-sm btn-warning']) ?>
         <?php if (Yii::$app->user->isGuest): ?>
             <?= Html::a('Sign in', ['/site/login'], ['class' => 'btn btn-sm btn-primary']) ?>
         <?php else: ?>

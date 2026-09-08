@@ -8,6 +8,8 @@ use yii\bootstrap5\Nav;
 use yii\bootstrap5\NavBar;
 use yii\helpers\Html;
 
+$backendBaseUrl = str_replace('/frontend/web', '/backend/web', rtrim(Yii::$app->request->baseUrl, '/'));
+
 $items = [
     [
         'label' => 'Home',
@@ -28,6 +30,11 @@ $items = [
     [
         'label' => 'Contact',
         'url' => ['/site/contact'],
+    ],
+    [
+        'label' => 'Admin Panel',
+        'url' => $backendBaseUrl . '/index.php/site/login',
+        'linkOptions' => ['class' => 'btn btn-sm btn-warning ms-md-2'],
     ],
     [
         'label' => 'Logout (' . Html::encode(Yii::$app->user->identity?->username) . ')',
