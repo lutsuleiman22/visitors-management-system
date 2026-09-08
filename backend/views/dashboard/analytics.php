@@ -8,6 +8,10 @@ $this->title = 'Live Analytics';
 $this->params['breadcrumbs'][] = $this->title;
 $this->registerJsFile('https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js', ['position' => yii\web\View::POS_HEAD]);
 ?>
+<div class="mb-3 d-flex flex-wrap gap-2">
+    <?= Html::a('← Back', ['/admin/reports'], ['class' => 'btn btn-light border']) ?>
+    <?= Html::a('🏠 Dashboard', ['/admin/dashboard'], ['class' => 'btn btn-warning']) ?>
+</div>
 <h1 class="h3 mb-4">Live Dashboard Analytics</h1>
 <div class="row g-3 mb-4">
     <?php foreach ([['Visitors Today', $today], ['Currently Inside', $inside], ['Checked Out', $checkedOut], ['Pending', $pending]] as [$label, $value]): ?>

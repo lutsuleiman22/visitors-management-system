@@ -11,7 +11,9 @@ use common\models\User;
 use common\models\Visit;
 use common\models\Visitor;
 use Yii;
+use yii\helpers\Html;
 use yii\web\Response;
+use yii\web\ServerErrorHttpException;
 
 class AdminController extends BaseController
 {
@@ -91,91 +93,194 @@ class AdminController extends BaseController
     {
         $this->requireRole(User::ROLE_ADMIN);
 
-        $trendLabels = [];
-        $trendValues = [];
-        $hostLabels = [];
-        $hostValues = [];
+        return $this->render('reports');
+    }
+
+    public function actionDaily(): string
+    {
+        return $this->renderTimeReport('daily', 'Daily Reports', 'daily');
+    }
+
+    public function actionWeekly(): string
+    {
+        return $this->renderTimeReport('weekly', 'Weekly Reports', 'weekly');
+    }
+
+    public function actionMonthly(): string
+    {
+        return $this->renderTimeReport('monthly', 'Monthly Reports', 'monthly');
+    }
+
+    public function actionAnnual(): string
+    {
+        return $this->renderTimeReport('annual', 'Annual Reports', 'annual');
+    }
+
+    public function actionExportPdf(): Response
+    {
+        $this->requireRole(User::ROLE_ADMIN);
 
         try {
-            $today = date('Y-m-d 00:00:00');
-            $tomorrow = date('Y-m-d 00:00:00', strtotime('+1 day'));
-            $trendStart = date('Y-m-d 00:00:00', strtotime('-6 days'));
-
-            $dailyRows = Visit::find()
-                ->select([
-                    'day' => 'DATE(check_in_time)',
-                    'count' => 'COUNT(*)',
-                ])
-                ->where(['>=', 'check_in_time', $trendStart])
-                ->groupBy(['day'])
-                ->asArray()
-                ->all();
-            $dailyCounts = [];
-            foreach ($dailyRows as $row) {
-                $dailyCounts[(string) $row['day']] = (int) $row['count'];
-            }
-            for ($offset = 6; $offset >= 0; $offset--) {
-                $day = date('Y-m-d', strtotime('-' . $offset . ' days'));
-                $trendLabels[] = date('D', strtotime($day));
-                $trendValues[] = $dailyCounts[$day] ?? 0;
+            if (!class_exists('Mpdf\\Mpdf')) {
+                throw new ServerErrorHttpException('PDF export dependency is not installed.');
             }
 
-            $hostRows = Visit::find()
-                ->alias('v')
-                ->select([
-                    'host_name' => "COALESCE(u.username, 'Unassigned')",
-                    'count' => 'COUNT(*)',
-                ])
-                ->leftJoin(['u' => User::tableName()], 'u.id = v.host_user_id')
-                ->groupBy(['u.id', 'u.username'])
-                ->orderBy(['count' => SORT_DESC])
-                ->limit(8)
-                ->asArray()
-                ->all();
-            foreach ($hostRows as $row) {
-                $hostLabels[] = (string) $row['host_name'];
-                $hostValues[] = (int) $row['count'];
+            [$visits, $startDate, $endDate, $filterType] = $this->timeReportData();
+            $html = '<h1>Visitor Report</h1>'
+                . '<p>Period: ' . Html::encode($startDate->format('Y-m-d')) . ' to ' . Html::encode($endDate->format('Y-m-d')) . '</p>'
+                . '<table border="1" cellpadding="6" cellspacing="0" width="100%">'
+                . '<thead><tr><th>Name</th><th>Host</th><th>Status</th><th>Date</th></tr></thead><tbody>';
+            foreach ($visits as $visit) {
+                $html .= '<tr><td>' . Html::encode($visit->visitor?->full_name ?? 'Unknown visitor')
+                    . '</td><td>' . Html::encode($visit->host?->username ?? 'Unassigned')
+                    . '</td><td>' . Html::encode($visit->isCheckedIn() ? 'Inside' : 'Checked out')
+                    . '</td><td>' . Html::encode($visit->check_in_time ?: '—') . '</td></tr>';
             }
+            $html .= '</tbody></table>';
 
-            $data = [
-                'totalVisits' => (int) Visit::find()->count(),
-                'checkedIn' => (int) Visit::find()->where(['status' => Visit::STATUS_CHECKED_IN, 'check_out_time' => null])->count(),
-                'checkedOut' => (int) Visit::find()->where(['not', ['check_out_time' => null]])->count(),
-                'totalVisitors' => (int) Visitor::find()->count(),
-                'notificationCount' => (int) Notification::find()
-                    ->where(['or', ['user_id' => (int) Yii::$app->user->id], ['user_id' => null]])
-                    ->andWhere(['is_read' => 0])
-                    ->count(),
-                'recentVisits' => Visit::find()
-                    ->with(['visitor', 'host'])
-                    ->orderBy(['check_in_time' => SORT_DESC])
-                    ->limit(30)
-                    ->all(),
-                'trendLabels' => $trendLabels,
-                'trendValues' => $trendValues,
-                'hostLabels' => $hostLabels,
-                'hostValues' => $hostValues,
-                'today' => (int) Visit::find()
-                    ->where(['>=', 'check_in_time', $today])
-                    ->andWhere(['<', 'check_in_time', $tomorrow])
-                    ->count(),
-            ];
+            $pdf = new \Mpdf\Mpdf();
+            $pdf->WriteHTML($html);
+
+            return Yii::$app->response->sendContentAsFile(
+                $pdf->Output('', 'S'),
+                'visitor-' . $filterType . '-report.pdf',
+                ['mimeType' => 'application/pdf'],
+            );
         } catch (\Throwable $exception) {
             Yii::error($exception->getMessage(), __METHOD__);
-            $data = [
-                'totalVisits' => 0,
-                'checkedIn' => 0,
-                'checkedOut' => 0,
-                'totalVisitors' => 0,
-                'notificationCount' => 0,
-                'recentVisits' => [],
-                'trendLabels' => $trendLabels,
-                'trendValues' => $trendValues,
-                'hostLabels' => $hostLabels,
-                'hostValues' => $hostValues,
-                'today' => 0,
-            ];
+            Yii::$app->session->setFlash('error', 'The PDF report is temporarily unavailable.');
+
+            return $this->redirect(['reports']);
         }
-        return $this->render('reports', $data);
+    }
+
+    public function actionExportExcel(): Response
+    {
+        $this->requireRole(User::ROLE_ADMIN);
+
+        try {
+            if (!class_exists('PhpOffice\\PhpSpreadsheet\\Spreadsheet')) {
+                throw new ServerErrorHttpException('Excel export dependency is not installed.');
+            }
+
+            [$visits, , , $filterType] = $this->timeReportData();
+            $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+            $sheet = $spreadsheet->getActiveSheet();
+            $sheet->fromArray(['Name', 'Host', 'Status', 'Date'], null, 'A1');
+            $rows = [];
+            foreach ($visits as $visit) {
+                $rows[] = [
+                    (string) ($visit->visitor?->full_name ?? 'Unknown visitor'),
+                    (string) ($visit->host?->username ?? 'Unassigned'),
+                    $visit->isCheckedIn() ? 'Inside' : 'Checked out',
+                    (string) ($visit->check_in_time ?: ''),
+                ];
+            }
+            if ($rows !== []) {
+                $sheet->fromArray($rows, null, 'A2');
+            }
+            $sheet->getStyle('A1:D1')->getFont()->setBold(true);
+            foreach (range('A', 'D') as $column) {
+                $sheet->getColumnDimension($column)->setAutoSize(true);
+            }
+
+            $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+            ob_start();
+            $writer->save('php://output');
+
+            return Yii::$app->response->sendContentAsFile(
+                (string) ob_get_clean(),
+                'visitor-' . $filterType . '-report.xlsx',
+                ['mimeType' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+            );
+        } catch (\Throwable $exception) {
+            if (ob_get_level() > 0) {
+                ob_end_clean();
+            }
+            Yii::error($exception->getMessage(), __METHOD__);
+            Yii::$app->session->setFlash('error', 'The Excel report is temporarily unavailable.');
+
+            return $this->redirect(['reports']);
+        }
+    }
+
+    private function renderTimeReport(string $view, string $title, string $filterType): string
+    {
+        $this->requireRole(User::ROLE_ADMIN);
+
+        [$visits, $startDate, $endDate, $filterType, $filterValue] = $this->timeReportData($filterType);
+
+        return $this->render($view, [
+            'title' => $title,
+            'visits' => $visits,
+            'filterType' => $filterType,
+            'filterValue' => $filterValue,
+            'startDate' => $startDate,
+            'endDate' => $endDate,
+        ]);
+    }
+
+    /** @return array{0: array, 1: \DateTimeImmutable, 2: \DateTimeImmutable, 3: string, 4: string} */
+    private function timeReportData(string|null $forcedType = null): array
+    {
+        $filterType = $forcedType ?? (string) Yii::$app->request->get('type', 'daily');
+        if (!in_array($filterType, ['daily', 'weekly', 'monthly', 'annual'], true)) {
+            $filterType = 'daily';
+        }
+
+        $today = new \DateTimeImmutable('today');
+        if ($filterType === 'weekly') {
+            $filterValue = $this->filterValue($filterType);
+            $selectedDate = \DateTimeImmutable::createFromFormat('!Y-m-d', $filterValue);
+            if (!$selectedDate || $selectedDate->format('Y-m-d') !== $filterValue || $selectedDate > $today) {
+                $selectedDate = $today;
+                $filterValue = $today->format('Y-m-d');
+            }
+            $startDate = $selectedDate->modify('monday this week');
+            $endDate = $startDate->modify('+6 days')->setTime(23, 59, 59);
+        } elseif ($filterType === 'monthly') {
+            $filterValue = $this->filterValue($filterType);
+            $selectedMonth = \DateTimeImmutable::createFromFormat('!Y-m', $filterValue);
+            if (!$selectedMonth || $selectedMonth->format('Y-m') !== $filterValue || $selectedMonth > $today->modify('first day of this month')) {
+                $selectedMonth = $today->modify('first day of this month');
+                $filterValue = $selectedMonth->format('Y-m');
+            }
+            $startDate = $selectedMonth->modify('first day of this month');
+            $endDate = $startDate->modify('first day of next month')->modify('-1 second');
+        } elseif ($filterType === 'annual') {
+            $filterValue = $this->filterValue($filterType);
+            $currentYear = (int) $today->format('Y');
+            $selectedYear = filter_var($filterValue, FILTER_VALIDATE_INT);
+            if ($selectedYear === false || $selectedYear < 1970 || $selectedYear > $currentYear || (string) $selectedYear !== $filterValue) {
+                $selectedYear = $currentYear;
+                $filterValue = (string) $currentYear;
+            }
+            $startDate = new \DateTimeImmutable($selectedYear . '-01-01');
+            $endDate = $startDate->modify('+1 year')->modify('-1 second');
+        } else {
+            $filterValue = $today->format('Y-m-d');
+            $startDate = $today;
+            $endDate = $today->setTime(23, 59, 59);
+        }
+
+        $start = $startDate->getTimestamp();
+        $end = $endDate->getTimestamp();
+        $visits = Visit::find()
+            ->with(['visitor', 'host'])
+            ->where(['between', 'created_at', $start, $end])
+            ->orderBy(['created_at' => SORT_DESC])
+            ->all();
+
+        return [$visits, $startDate, $endDate, $filterType, $filterValue];
+    }
+
+    private function filterValue(string $filterType): string
+    {
+        return match ($filterType) {
+            'weekly' => (string) Yii::$app->request->get('date', ''),
+            'monthly' => (string) Yii::$app->request->get('month', ''),
+            'annual' => (string) Yii::$app->request->get('year', ''),
+            default => date('Y-m-d'),
+        };
     }
 }

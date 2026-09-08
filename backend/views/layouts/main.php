@@ -33,7 +33,7 @@ $this->render('_head');
     <aside id="backend-sidebar" class="backend-sidebar" aria-label="Primary navigation">
         <div class="sidebar-brand">
             <span class="sidebar-mark">VM</span>
-            <div><strong>Man Creative Visitor System</strong><small>Operations portal</small></div>
+            <div><strong>Visitor-Management-System</strong><small>Operations portal</small></div>
         </div>
         <div class="sidebar-section-label">Workspace</div>
         <nav class="sidebar-nav">
@@ -43,7 +43,7 @@ $this->render('_head');
                 <a class="sidebar-link" href="<?= Html::encode(Yii::$app->urlManager->createUrl(['/admin/reports'])) ?>"><span class="sidebar-icon">R</span>Reports</a>
                 <a class="sidebar-link" href="<?= Html::encode(Yii::$app->urlManager->createUrl(['/dashboard/analytics'])) ?>"><span class="sidebar-icon">A</span>Analytics</a>
                 <a class="sidebar-link" href="<?= Html::encode(Yii::$app->urlManager->createUrl(['/visit/index'])) ?>"><span class="sidebar-icon">V</span>Visitors</a>
-                <a class="sidebar-link" href="<?= Html::encode(Yii::$app->urlManager->createUrl(['/visit/evacuation'])) ?>"><span class="sidebar-icon">E</span>Active Visits</a>
+                <a class="sidebar-link" href="<?= Html::encode(Yii::$app->urlManager->createUrl(['/visit/evacuation'])) ?>"><span class="sidebar-icon">E</span>Active Visitors</a>
                 <a class="sidebar-link" href="<?= Html::encode(Yii::$app->urlManager->createUrl(['/notification/index'])) ?>"><span class="sidebar-icon">N</span>Notifications</a>
                 <a class="sidebar-link" href="<?= Html::encode(Yii::$app->urlManager->createUrl(['/audit-log/index'])) ?>"><span class="sidebar-icon">A</span>Audit Logs</a>
             <?php elseif ($isReception): ?>

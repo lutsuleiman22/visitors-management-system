@@ -9,6 +9,10 @@ use yii\helpers\Html;
 $this->title = 'Visitor Reports';
 $this->params['breadcrumbs'][] = $this->title;
 ?>
+<div class="mb-3 d-flex flex-wrap gap-2">
+    <?= Html::a('← Back', ['/admin/reports'], ['class' => 'btn btn-light border']) ?>
+    <?= Html::a('🏠 Dashboard', ['/admin/dashboard'], ['class' => 'btn btn-warning']) ?>
+</div>
 <h1 class="h3 mb-3">Visitor Reports</h1>
 <?php $form = ActiveForm::begin(['method' => 'get']); ?>
 <div class="row g-3">

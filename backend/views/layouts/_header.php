@@ -36,7 +36,7 @@ if (!Yii::$app->user->isGuest && ($isAdmin || $isReception || $isSecurity)) {
 <header id="header" class="backend-topbar">
     <div class="topbar-left">
         <?= Html::button('Menu', ['id' => 'sidebar-toggle', 'class' => 'btn btn-sm btn-outline-secondary d-md-none', 'aria-label' => 'Open navigation']) ?>
-        <?= Html::a('Man Creative Visitor System', ['/site/index'], ['class' => 'topbar-brand']) ?>
+        <?= Html::a('Visitor-Management-System', ['/site/index'], ['class' => 'topbar-brand']) ?>
         <span class="topbar-context">Visitor management</span>
     </div>
     <div class="topbar-actions">

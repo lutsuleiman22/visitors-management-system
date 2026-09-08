@@ -10,7 +10,7 @@ use yii\helpers\Html;
 <footer id="footer" class="mt-auto py-3 bg-body-tertiary">
     <div class="container">
         <div class="row text-body-secondary">
-            <div class="col-12 text-center">&copy; Man Creative Visitor System <?= date('Y') ?></div>
+            <div class="col-12 text-center">&copy; created by EASTC students <?= date('Y') ?></div>
         </div>
     </div>
 </footer>
