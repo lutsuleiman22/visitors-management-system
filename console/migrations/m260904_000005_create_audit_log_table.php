@@ -12,9 +12,11 @@ class m260904_000005_create_audit_log_table extends Migration
             'id' => $this->primaryKey(),
             'user_id' => $this->integer()->null(),
             'action' => $this->string(80)->notNull(),
+            'model' => $this->string(80)->null(),
+            'record_id' => $this->integer()->null(),
             'description' => $this->text()->notNull(),
-            'created_at' => $this->dateTime()->notNull(),
             'ip_address' => $this->string(45)->null(),
+            'created_at' => $this->dateTime()->notNull(),
         ], 'ENGINE=InnoDB DEFAULT CHARSET=utf8mb4');
         $this->createIndex('idx-audit_log-user_id', '{{%audit_log}}', 'user_id');
         $this->createIndex('idx-audit_log-created_at', '{{%audit_log}}', 'created_at');

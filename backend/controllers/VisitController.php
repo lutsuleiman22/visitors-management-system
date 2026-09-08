@@ -6,6 +6,7 @@ namespace backend\controllers;
 
 use backend\components\BaseController;
 use backend\models\VisitSearch;
+use common\components\AuditLogger;
 use common\models\User;
 use common\models\Visit;
 use common\models\Visitor;
@@ -15,6 +16,7 @@ use Yii;
 use yii\data\ArrayDataProvider;
 use yii\data\ActiveDataProvider;
 use yii\filters\VerbFilter;
+use yii\web\ForbiddenHttpException;
 use yii\web\NotFoundHttpException;
 use yii\web\Response;
 use yii\web\ServerErrorHttpException;
@@ -77,7 +79,7 @@ class VisitController extends BaseController
                 'pagination' => false,
                 'sort' => false,
             ]);
-            $count = (int) $dataProvider->getTotalCount();
+                $count = (int) $dataProvider->getTotalCount();
         } catch (\Throwable $exception) {
             Yii::error($exception->getMessage(), __METHOD__);
             $dataProvider = new ArrayDataProvider(['allModels' => []]);
@@ -109,6 +111,7 @@ class VisitController extends BaseController
      */
     public function actionCreate(): string|Response
     {
+        $this->denyAdminWrite('Admin cannot add visitors.');
         $this->requireRole(User::ROLE_ADMIN, User::ROLE_RECEPTION);
 
         $model = new Visit();
@@ -119,6 +122,7 @@ class VisitController extends BaseController
         try {
             if ($model->load(Yii::$app->request->post()) && $model->save()) {
                 AuditLogService::logAction('create-visit', 'Visit #' . $model->id . ' created.');
+                AuditLogger::log('CREATE', 'Visit', $model->id, 'Visitor checked in');
                 NotificationService::createNotification('New visit recorded.', 'info');
                 Yii::$app->session->setFlash('success', 'Visit created successfully.');
                 return $this->redirect(['view', 'id' => $model->id]);
@@ -141,6 +145,7 @@ class VisitController extends BaseController
      */
     public function actionUpdate(int $id): string|Response
     {
+        $this->denyAdminWrite('Admin cannot update visitors.');
         $this->requireRole(User::ROLE_ADMIN);
 
         $model = $this->findModel($id);
@@ -148,6 +153,7 @@ class VisitController extends BaseController
         try {
             if ($model->load(Yii::$app->request->post()) && $model->save()) {
                 AuditLogService::logAction('update-visit', 'Visit #' . $model->id . ' updated.');
+                AuditLogger::log('UPDATE', 'Visit', $model->id, 'Visit updated');
                 Yii::$app->session->setFlash('success', 'Visit updated successfully.');
                 return $this->redirect(['view', 'id' => $model->id]);
             }
@@ -168,6 +174,7 @@ class VisitController extends BaseController
      */
     public function actionDelete(int $id): Response
     {
+        $this->denyAdminWrite('Admin cannot delete visitors.');
         $this->requireRole(User::ROLE_ADMIN);
 
         try {
@@ -178,6 +185,7 @@ class VisitController extends BaseController
             return $this->redirect(['/site/index']);
         }
         AuditLogService::logAction('delete-visit', 'Visit #' . $id . ' deleted.');
+        AuditLogger::log('DELETE', 'Visit', $id, 'Visit deleted');
         Yii::$app->session->setFlash('success', 'Visit deleted.');
 
         return $this->redirect(['/site/index']);
@@ -188,6 +196,7 @@ class VisitController extends BaseController
      */
     public function actionCheckOut(int $id): Response
     {
+        $this->denyAdminWrite('Admin cannot check out visitors.');
         $this->requireRole(User::ROLE_ADMIN, User::ROLE_RECEPTION);
 
         $model = $this->findModel($id);
@@ -197,6 +206,7 @@ class VisitController extends BaseController
                 Yii::$app->session->setFlash('warning', 'This visit has already been checked out.');
             } elseif ($model->checkOut()) {
                 AuditLogService::logAction('check-out', 'Visitor checked out from visit #' . $model->id);
+                AuditLogger::log('CHECKOUT', 'Visit', $model->id, 'Visitor checked out');
                 NotificationService::createNotification('Visitor checked out: ' . ($model->visitor->full_name ?? 'Unknown'), 'success');
                 Yii::$app->session->setFlash('success', 'Visitor checked out successfully.');
             } else {
@@ -208,6 +218,13 @@ class VisitController extends BaseController
         }
 
         return $this->redirect(Yii::$app->request->referrer ?: ['view', 'id' => $id]);
+    }
+
+    private function denyAdminWrite(string $message): void
+    {
+        if (Yii::$app->user->identity?->role === User::ROLE_ADMIN) {
+            throw new ForbiddenHttpException($message);
+        }
     }
 
     /**

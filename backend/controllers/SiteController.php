@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace backend\controllers;
 
 use backend\components\BaseController;
+use common\components\AuditLogger;
 use common\models\LoginForm;
 use common\models\User;
 use common\services\AuditLogService;
@@ -99,6 +100,7 @@ class SiteController extends BaseController
         $model = new LoginForm();
         if ($model->load(Yii::$app->request->post()) && $model->login()) {
             AuditLogService::logAction('login', 'User logged in successfully.');
+            AuditLogger::log('LOGIN', 'User', Yii::$app->user->id, 'User logged in');
             NotificationService::createNotification('New login: ' . Yii::$app->user->identity->username, 'info', (int) Yii::$app->user->id);
             $role = (string) Yii::$app->user->identity->role;
             return match ($role) {

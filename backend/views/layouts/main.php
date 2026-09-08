@@ -45,6 +45,7 @@ $this->render('_head');
                 <a class="sidebar-link" href="<?= Html::encode(Yii::$app->urlManager->createUrl(['/visit/index'])) ?>"><span class="sidebar-icon">V</span>Visitors</a>
                 <a class="sidebar-link" href="<?= Html::encode(Yii::$app->urlManager->createUrl(['/visit/evacuation'])) ?>"><span class="sidebar-icon">E</span>Active Visits</a>
                 <a class="sidebar-link" href="<?= Html::encode(Yii::$app->urlManager->createUrl(['/notification/index'])) ?>"><span class="sidebar-icon">N</span>Notifications</a>
+                <a class="sidebar-link" href="<?= Html::encode(Yii::$app->urlManager->createUrl(['/audit-log/index'])) ?>"><span class="sidebar-icon">A</span>Audit Logs</a>
             <?php elseif ($isReception): ?>
                 <a class="sidebar-link" href="<?= Html::encode(Yii::$app->urlManager->createUrl(['/reception/dashboard'])) ?>"><span class="sidebar-icon">D</span>Dashboard</a>
                 <a class="sidebar-link" href="<?= Html::encode(Yii::$app->urlManager->createUrl(['/visit/create'])) ?>"><span class="sidebar-icon">+</span>Add Visitor</a>
