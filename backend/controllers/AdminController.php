@@ -27,10 +27,23 @@ class AdminController extends BaseController
                 'totalVisitors' => (int) Visitor::find()->count(),
                 'totalVisits' => (int) Visit::find()->count(),
                 'activeVisits' => (int) Visit::find()->where(['status' => Visit::STATUS_CHECKED_IN, 'check_out_time' => null])->count(),
+                'checkedOutVisits' => (int) Visit::find()->where(['not', ['check_out_time' => null]])->count(),
+                'pendingVisits' => (int) Visit::find()->where(['not in', 'status', [Visit::STATUS_CHECKED_IN, Visit::STATUS_CHECKED_OUT]])->count(),
+                'todayVisits' => (int) Visit::find()->where(['>=', 'check_in_time', date('Y-m-d 00:00:00')])->count(),
+                'recentVisitors' => Visit::find()->with(['visitor', 'host'])->orderBy(['created_at' => SORT_DESC])->limit(10)->all(),
             ];
         } catch (\Throwable $exception) {
             Yii::error($exception->getMessage(), __METHOD__);
-            $data = ['totalUsers' => 0, 'totalVisitors' => 0, 'totalVisits' => 0, 'activeVisits' => 0];
+            $data = [
+                'totalUsers' => 0,
+                'totalVisitors' => 0,
+                'totalVisits' => 0,
+                'activeVisits' => 0,
+                'checkedOutVisits' => 0,
+                'pendingVisits' => 0,
+                'todayVisits' => 0,
+                'recentVisitors' => [],
+            ];
         }
         return $this->render('dashboard', $data);
     }

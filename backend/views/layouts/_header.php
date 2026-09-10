@@ -35,7 +35,7 @@ if (!Yii::$app->user->isGuest && ($isAdmin || $isReception || $isSecurity)) {
 ?>
 <header id="header" class="backend-topbar">
     <div class="topbar-left">
-        <?= Html::button('Menu', ['id' => 'sidebar-toggle', 'class' => 'btn btn-sm btn-outline-secondary d-md-none', 'aria-label' => 'Open navigation']) ?>
+        <?= Html::button('☰', ['id' => 'sidebar-toggle', 'class' => 'btn btn-sm btn-outline-secondary', 'aria-label' => 'Toggle navigation']) ?>
         <?= Html::a('Visitor-Management-System', ['/site/index'], ['class' => 'topbar-brand']) ?>
         <span class="topbar-context">Visitor management</span>
     </div>
@@ -69,6 +69,16 @@ if (!Yii::$app->user->isGuest && ($isAdmin || $isReception || $isSecurity)) {
 (function () {
     const toggle = document.getElementById('sidebar-toggle');
     const sidebar = document.getElementById('backend-sidebar');
-    if (toggle && sidebar) toggle.addEventListener('click', function () { sidebar.classList.toggle('is-open'); });
+    const frame = document.querySelector('.backend-frame');
+    if (toggle && sidebar && frame) {
+        toggle.addEventListener('click', function () {
+            if (window.matchMedia('(max-width: 767.98px)').matches) {
+                sidebar.classList.toggle('is-open');
+            } else {
+                sidebar.classList.toggle('collapsed');
+                frame.classList.toggle('sidebar-collapsed');
+            }
+        });
+    }
 })();
 JS); ?>

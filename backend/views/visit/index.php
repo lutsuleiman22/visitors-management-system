@@ -32,7 +32,6 @@ $canCheckOut = in_array($role, ['admin', 'reception'], true);
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
         <h1 class="h3 mb-0"><?= Html::encode($this->title) ?></h1>
         <div class="d-flex flex-wrap gap-2">
-            <?= Html::a('Evacuation List', ['evacuation'], ['class' => 'btn btn-warning']) ?>
             <?php if ($canCreate): ?>
                 <?= Html::a('Create Visit', ['create'], ['class' => 'btn btn-success']) ?>
             <?php endif; ?>
@@ -65,24 +64,39 @@ $canCheckOut = in_array($role, ['admin', 'reception'], true);
             'from_location',
             'visitor_pass_number',
             [
-                'attribute' => 'status',
-                'filter' => Visit::statusList(),
+                'label' => 'Status',
                 'format' => 'raw',
                 'value' => static function (Visit $model): string {
-                    $class = $model->status === Visit::STATUS_CHECKED_IN ? 'success' : 'dark';
-                    return Html::tag('span', Html::encode($model->status), [
-                        'class' => 'badge text-bg-' . $class,
-                    ]);
+                    $isToday = $model->created_at !== null && date('Y-m-d') === date('Y-m-d', (int) $model->created_at);
+                    if ($model->check_out_time !== null && $model->check_out_time !== '') {
+                        $status = 'Completed';
+                        $class = 'primary';
+                    } elseif ($model->created_at !== null && !$isToday) {
+                        $status = 'Left Without Checkout';
+                        $class = 'danger';
+                    } else {
+                        $status = 'Active';
+                        $class = 'success';
+                    }
+
+                    return Html::tag('span', Html::encode($status), ['class' => 'badge text-bg-' . $class]);
                 },
             ],
-            [
-                'attribute' => 'active_only',
-                'filter' => ['0' => 'All visits', '1' => 'Active only'],
-                'value' => static fn (Visit $model): string => $model->isCheckedIn() ? 'Yes' : 'No',
-                'contentOptions' => ['class' => 'text-center'],
-            ],
             'check_in_time',
-            'check_out_time',
+            [
+                'label' => 'Checkout Status',
+                'value' => static function (Visit $model): string {
+                    if ($model->check_out_time !== null && $model->check_out_time !== '') {
+                        return 'Checked out at: ' . $model->check_out_time;
+                    }
+
+                    $isToday = $model->created_at !== null && date('Y-m-d') === date('Y-m-d', (int) $model->created_at);
+
+                    return $model->created_at !== null && !$isToday
+                        ? 'Missed checkout (system auto-detected)'
+                        : 'Still inside';
+                },
+            ],
             [
                 'class' => ActionColumn::class,
                 'template' => '{view}' . ($canUpdate ? ' {update}' : '') . ($canCheckOut ? ' {check-out}' : '') . ($canDelete ? ' {delete}' : ''),

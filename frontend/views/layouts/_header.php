@@ -21,7 +21,7 @@ $items = [
     ],
     [
         'label' => 'Check-Out',
-        'url' => ['/visitor/check-out'],
+        'url' => ['/visitor/checkout-page'],
     ],
     [
         'label' => 'About',

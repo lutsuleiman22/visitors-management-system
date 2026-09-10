@@ -127,6 +127,7 @@ class CheckInForm extends Model
             $visitor->status = Visitor::STATUS_ACTIVE;
 
             if (!$visitor->save()) {
+                Yii::error(['visitorSaveErrors' => $visitor->getErrors(), 'attributes' => $visitor->attributes], __METHOD__);
                 $this->addErrors($visitor->getErrors());
                 $transaction->rollBack();
                 return null;
@@ -152,6 +153,7 @@ class CheckInForm extends Model
             $visit->check_in_time = date('Y-m-d H:i:s');
 
             if (!$visit->save()) {
+                Yii::error(['visitSaveErrors' => $visit->getErrors(), 'attributes' => $visit->attributes], __METHOD__);
                 $this->addErrors($visit->getErrors());
                 $transaction->rollBack();
                 return null;

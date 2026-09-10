@@ -12,7 +12,7 @@ $this->registerJsFile('https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.um
     <?= Html::a('← Back', ['/admin/reports'], ['class' => 'btn btn-light border']) ?>
     <?= Html::a('🏠 Dashboard', ['/admin/dashboard'], ['class' => 'btn btn-warning']) ?>
 </div>
-<h1 class="h3 mb-4">Live Dashboard Analytics</h1>
+<h1 class="h3 mb-4">Live Analytics</h1>
 <div class="row g-3 mb-4">
     <?php foreach ([['Visitors Today', $today], ['Currently Inside', $inside], ['Checked Out', $checkedOut], ['Pending', $pending]] as [$label, $value]): ?>
         <div class="col-md-3"><div class="card shadow-sm"><div class="card-body"><div class="small text-body-secondary"><?= Html::encode($label) ?></div><div class="display-6 fw-bold"><?= (int) $value ?></div></div></div></div>
