@@ -128,7 +128,7 @@ class VisitorController extends Controller
                 $selectedVisit = $this->findActiveVisitById($visitId);
 
                 if ($selectedVisit === null) {
-                    Yii::$app->session->setFlash('error', 'Please select a visitor who is currently checked in.');
+                    Yii::$app->session->setFlash('error', 'Type the exact checked-in visitor name to continue.');
                     return $this->render('checkout-page', ['model' => $model, 'step' => 'search', 'visit' => null]);
                 }
 
