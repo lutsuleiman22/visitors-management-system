@@ -1,11 +1,15 @@
 <?php
-
 declare(strict_types=1);
 
 /** @var yii\web\View $this */
-/** @var common\models\Visit[] $visits */
+/** @var common\models\Visit|null $visit */
+/** @var frontend\models\CheckOutForm $model */
+/** @var string $step */
 
+use yii\bootstrap5\ActiveForm;
 use yii\helpers\Html;
+
+$searchUrl = Yii::$app->urlManager->createUrl(['/visitor/search-active-visitors']);
 
 $this->title = 'Visitor Check-Out';
 $this->params['breadcrumbs'][] = $this->title;
@@ -18,90 +22,181 @@ $this->params['breadcrumbs'][] = $this->title;
                 <div>
                     <span class="visitor-checkout-eyebrow">Self-service exit</span>
                     <h1>Visitor Check-Out</h1>
-                    <p>Find your name in today's visitor list to complete checkout.</p>
+                    <p>Search for the active visitor, confirm details, and complete checkout securely.</p>
                 </div>
             </div>
+
             <div class="visitor-checkout-body">
-                <label for="visitor-search" class="form-label">Search your name</label>
-                <input type="search" id="visitor-search" class="form-control visitor-search" placeholder="Type your name or host" autocomplete="off">
+                <?php if ($step === 'success' && $visit !== null): ?>
+                    <div class="visitor-success-panel">
+                        <div class="visitor-success-icon">✓</div>
+                        <h2>Check-out successful</h2>
+                        <p><?= Html::encode($visit->visitor?->full_name ?? 'Visitor') ?> has been checked out.</p>
+                        <div class="visitor-summary-box">
+                            <div><span>Name</span><strong><?= Html::encode($visit->visitor?->full_name ?? 'Unknown visitor') ?></strong></div>
+                            <div><span>Check-in time</span><strong><?= Html::encode($visit->check_in_time ?: '—') ?></strong></div>
+                        </div>
+                        <div class="visitor-action-row">
+                            <button type="button" class="btn visitor-primary-button" onclick="window.print()">Print receipt</button>
+                            <a href="<?= Html::encode(Yii::$app->urlManager->createUrl(['/visitor/checkout-page'])) ?>" class="btn visitor-secondary-button">New search</a>
+                        </div>
+                    </div>
+                <?php else: ?>
+                    <?php $form = ActiveForm::begin(['id' => 'visitor-checkout-form', 'method' => 'post', 'action' => ['/visitor/checkout-page'], 'options' => ['class' => 'visitor-checkout-form']]); ?>
+                        <?= Html::hiddenInput('checkout_step', $step === 'preview' ? 'confirm' : 'preview', ['id' => 'checkout-step']) ?>
+                        <?= Html::hiddenInput('visit_id', $visit?->id ?? '', ['id' => 'checkout-visit-id']) ?>
+                        <?= $form->field($model, 'search', ['inputOptions' => ['id' => 'visitor-search', 'autocomplete' => 'off', 'placeholder' => 'Type visitor name']]) ?>
+                        <div id="typed-visitor-name" class="visitor-typed-name" aria-live="polite"></div>
+                        <div id="visitor-search-results" class="visitor-search-results" aria-live="polite"></div>
 
-                <label for="visitor-select" class="form-label mt-3">Select your visit</label>
-                <select id="visitor-select" class="form-select visitor-select" size="<?= min(6, max(3, count($visits))) ?>">
-                    <option value="">Choose your name</option>
-                    <?php foreach ($visits as $visit): ?>
-                        <option value="<?= (int) $visit->id ?>" data-name="<?= Html::encode($visit->visitor?->full_name ?? '') ?>" data-host="<?= Html::encode($visit->host?->username ?? 'Unassigned') ?>" data-check-in="<?= Html::encode($visit->check_in_time ?: '—') ?>">
-                            <?= Html::encode(($visit->visitor?->full_name ?? 'Unknown visitor') . ' - ' . ($visit->host?->username ?? 'Unassigned')) ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
-                <?php if ($visits === []): ?><p class="visitor-checkout-empty">There are no active visitors to check out today.</p><?php endif; ?>
+                        <?php if ($step === 'preview' && $visit !== null): ?>
+                            <div class="visitor-details-card">
+                                <span class="visitor-checkout-eyebrow">Selected visitor</span>
+                                <h2><?= Html::encode($visit->visitor?->full_name ?? 'Unknown visitor') ?></h2>
+                                <div class="visitor-detail-grid">
+                                    <div><span>Phone</span><strong><?= Html::encode($visit->visitor?->phone_number ?? '—') ?></strong></div>
+                                    <div><span>Check-in time</span><strong><?= Html::encode($visit->check_in_time ?: '—') ?></strong></div>
+                                    <div><span>Pass</span><strong><?= Html::encode($visit->visitor_pass_number ?? '—') ?></strong></div>
+                                </div>
+                            </div>
+                        <?php endif; ?>
 
-                <div id="visitor-details" class="visitor-details" hidden>
-                    <span class="visitor-checkout-eyebrow">Selected visit</span>
-                    <h2 id="visitor-name">Visitor</h2>
-                    <dl>
-                        <div><dt>Host</dt><dd id="visitor-host">—</dd></div>
-                        <div><dt>Check-in time</dt><dd id="visitor-check-in">—</dd></div>
-                    </dl>
-                </div>
-
-                <form id="checkout-form" method="post" action="<?= Html::encode(Yii::$app->urlManager->createUrl(['/visitor/do-checkout'])) ?>">
-                    <?= Html::hiddenInput(Yii::$app->request->csrfParam, Yii::$app->request->getCsrfToken()) ?>
-                    <input type="hidden" name="id" id="checkout-id" value="">
-                    <button type="submit" id="checkout-button" class="btn visitor-checkout-button" disabled>Check Out</button>
-                </form>
-                <p class="visitor-checkout-note">Please confirm only your own visit.</p>
+                        <div class="visitor-action-row">
+                            <?php if ($step === 'preview' && $visit !== null): ?>
+                                <button type="submit" class="btn visitor-primary-button" id="confirm-checkout">Confirm checkout</button>
+                                <a href="<?= Html::encode(Yii::$app->urlManager->createUrl(['/visitor/checkout-page'])) ?>" class="btn visitor-secondary-button">Cancel</a>
+                            <?php else: ?>
+                                <button type="submit" class="btn visitor-primary-button" id="continue-checkout">Continue</button>
+                            <?php endif; ?>
+                        </div>
+                    <?php ActiveForm::end(); ?>
+                <?php endif; ?>
             </div>
         </div>
     </div>
 </div>
-<?php $this->registerCss(<<<'CSS'
-.visitor-checkout-page { background: linear-gradient(135deg, #f4f7f8 0%, #eef3f1 100%); margin: -1.5rem calc(50% - 50vw) -2.5rem; min-height: calc(100vh - 9rem); padding: 3rem 1rem; }
-.visitor-checkout-shell { margin: 0 auto; max-width: 680px; }.visitor-checkout-card { background: #fff; border: 1px solid #e1e9e5; border-radius: 14px; box-shadow: 0 18px 45px rgba(23,48,39,.1); overflow: hidden; }.visitor-checkout-heading { align-items: flex-start; background: #183b31; color: #fff; display: flex; gap: 1rem; padding: 2rem 2.25rem; }.visitor-checkout-mark { align-items: center; background: #b9d8c7; color: #183b31; display: inline-flex; flex: 0 0 2.8rem; font-size: .68rem; font-weight: 900; height: 2.8rem; justify-content: center; }.visitor-checkout-eyebrow { color: #b9d8c7; display: block; font-size: .68rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }.visitor-checkout-heading h1 { font-size: 1.65rem; font-weight: 800; margin: .3rem 0 .35rem; }.visitor-checkout-heading p { color: #d8e8e0; margin: 0; }.visitor-checkout-body { padding: 2rem 2.25rem 2.25rem; }.visitor-checkout-body .form-label { color: #33443d; font-size: .82rem; font-weight: 700; }.visitor-search, .visitor-select { border-color: #d7e1dc; border-radius: 8px; padding: .7rem .8rem; }.visitor-search:focus, .visitor-select:focus { border-color: #4f9b72; box-shadow: 0 0 0 .2rem rgba(79,155,114,.16); }.visitor-select { min-height: 9rem; }.visitor-select option { padding: .55rem; }.visitor-details { background: #f4faf6; border: 1px solid #cfe5d7; border-radius: 9px; margin: 1.25rem 0; padding: 1.1rem 1.2rem; }.visitor-details h2 { font-size: 1.1rem; font-weight: 800; margin: .3rem 0 .8rem; }.visitor-details dl { margin: 0; }.visitor-details dl > div { display: flex; justify-content: space-between; gap: 1rem; padding: .35rem 0; }.visitor-details dt { color: #6d7c74; font-size: .78rem; font-weight: 700; }.visitor-details dd { font-size: .82rem; margin: 0; text-align: right; }.visitor-checkout-button { background: #d9534f; border: 0; border-radius: 8px; color: #fff; font-weight: 800; margin-top: 1.25rem; padding: .75rem 1rem; width: 100%; }.visitor-checkout-button:hover:not(:disabled) { background: #bd3f3b; color: #fff; }.visitor-checkout-button:disabled { cursor: not-allowed; opacity: .5; }.visitor-checkout-note, .visitor-checkout-empty { color: #74837b; font-size: .78rem; margin: .75rem 0 0; text-align: center; }
-@media (max-width: 575.98px) { .visitor-checkout-page { margin-left: -.75rem; margin-right: -.75rem; padding: 1.25rem .75rem 2rem; }.visitor-checkout-heading { padding: 1.5rem; }.visitor-checkout-body { padding: 1.5rem; } }
-CSS);
-$this->registerJs(<<<'JS'
-(function () {
-    const search = document.getElementById('visitor-search');
-    const select = document.getElementById('visitor-select');
-    const details = document.getElementById('visitor-details');
-    const checkoutId = document.getElementById('checkout-id');
-    const checkoutButton = document.getElementById('checkout-button');
-    const checkoutForm = document.getElementById('checkout-form');
-    if (!search || !select || !details || !checkoutId || !checkoutButton || !checkoutForm) return;
 
-    function updateDetails() {
-        const option = select.options[select.selectedIndex];
-        const selected = option && option.value;
-        details.hidden = !selected;
-        checkoutButton.disabled = !selected;
-        checkoutId.value = selected || '';
-        if (selected) {
-            document.getElementById('visitor-name').textContent = option.dataset.name || 'Visitor';
-            document.getElementById('visitor-host').textContent = option.dataset.host || 'Unassigned';
-            document.getElementById('visitor-check-in').textContent = option.dataset.checkIn || '—';
-        }
-    }
-    search.addEventListener('input', function () {
-    const filter = search.value.toLowerCase().trim();
-    Array.from(select.options).forEach(function (option, index) {
-            if (index === 0) return;
-            option.hidden = filter !== '' && !option.text.toLowerCase().includes(filter);
-    });
-    if (select.selectedOptions[0]?.hidden) {
-            select.value = '';
-            updateDetails();
-    }
-    });
-    select.addEventListener('change', updateDetails);
-    checkoutForm.addEventListener('submit', function (event) {
-    if (!checkoutId.value || !window.confirm('Are you sure you want to check out?')) {
-            event.preventDefault();
-            return;
-    }
-    checkoutButton.disabled = true;
-    checkoutButton.textContent = 'Processing...';
-    });
-}());
-JS);
+<?php $this->registerCss(<<<'CSS'
+.visitor-checkout-page { background: linear-gradient(135deg, #0f172a 0%, #1a4c63 50%, #1aa39b 100%); margin: -1.5rem calc(50% - 50vw) -2.5rem; min-height: calc(100vh - 9rem); padding: 3rem 1rem; }
+.visitor-checkout-shell { margin: 0 auto; max-width: 640px; }
+.visitor-checkout-card { background: rgba(255,255,255,0.96); border: 1px solid rgba(15, 23, 42, 0.08); border-radius: 20px; box-shadow: 0 28px 60px rgba(15,23,42,0.18); overflow: hidden; }
+.visitor-checkout-heading { align-items: flex-start; background: linear-gradient(135deg, #0f172a 0%, #1b2a3a 100%); color: #fff; display: flex; gap: 1rem; padding: 2rem 2.1rem 1.65rem; }
+.visitor-checkout-mark { align-items: center; background: #dfeaf7; border-radius: 12px; color: #0f172a; display: inline-flex; flex: 0 0 3rem; font-size: .72rem; font-weight: 900; height: 3rem; justify-content: center; letter-spacing: .12em; }
+.visitor-checkout-eyebrow { color: #8ec7d7; display: block; font-size: .68rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+.visitor-checkout-heading h1 { font-size: 1.8rem; font-weight: 800; margin: .35rem 0; }
+.visitor-checkout-heading p { color: rgba(255,255,255,0.8); margin: 0; }
+.visitor-checkout-body { padding: 2rem 2.1rem 2.2rem; }
+.visitor-checkout-form { display: flex; flex-direction: column; gap: 1rem; }
+.visitor-checkout-form .form-label { color: #1e2d3d; font-size: .8rem; font-weight: 700; }
+.visitor-checkout-form .form-control { border: 1px solid #d5dde8; border-radius: 10px; min-height: 48px; padding: .8rem 1rem; }
+.visitor-checkout-form .form-control:focus { border-color: #1a4c63; box-shadow: 0 0 0 .2rem rgba(26,76,99,.12); }
+.visitor-typed-name { background: #f5fafc; border: 1px solid #dfeaf2; border-radius: 10px; color: #1e2d3d; display: none; margin-top: -.25rem; padding: .75rem .9rem; }
+.visitor-typed-name.is-visible { display: block; }
+.visitor-typed-name span { color: #64748b; display: block; font-size: .72rem; font-weight: 700; letter-spacing: .05em; margin-bottom: .2rem; text-transform: uppercase; }
+.visitor-typed-name strong { font-size: 1rem; }
+.visitor-search-results { display: none; background: #fff; border: 1px solid #dfe8ef; border-radius: 12px; box-shadow: 0 12px 24px rgba(15,23,42,.08); margin-top: -0.5rem; overflow: hidden; }
+.visitor-search-results.is-visible { display: block; }
+.visitor-search-item { background: #fff; border: 0; border-bottom: 1px solid #edf1f5; color: #1a2735; cursor: pointer; display: block; padding: .85rem 1rem; text-align: left; width: 100%; }
+.visitor-search-item:last-child { border-bottom: 0; }
+.visitor-search-item:hover, .visitor-search-item:focus { background: #f4f9fd; }
+.visitor-search-item small { color: #5f7183; display: block; margin-top: .15rem; }
+.visitor-details-card, .visitor-success-panel, .visitor-summary-box { background: #f5fafc; border: 1px solid #dfeaf2; border-radius: 12px; }
+.visitor-details-card { padding: 1.15rem 1.1rem; }
+.visitor-details-card h2 { font-size: 1.2rem; font-weight: 800; margin: .35rem 0 .8rem; }
+.visitor-detail-grid { display: grid; gap: .75rem; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); }
+.visitor-detail-grid div { background: #fff; border-radius: 10px; padding: .7rem .8rem; }
+.visitor-detail-grid span { color: #64748b; display: block; font-size: .72rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+.visitor-detail-grid strong { font-size: .92rem; }
+.visitor-action-row { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: .25rem; }
+.visitor-primary-button, .visitor-secondary-button { border-radius: 10px; font-weight: 700; padding: .8rem 1.25rem; }
+.visitor-primary-button { background: linear-gradient(135deg, #1a4c63 0%, #0f172a 100%); border: 0; color: #fff; }
+.visitor-secondary-button { background: #edf4f8; border: 1px solid #dfe9f0; color: #1e2d3d; }
+.visitor-success-panel { padding: 1.5rem; text-align: center; }
+.visitor-success-icon { align-items: center; background: #dff6ec; border-radius: 999px; color: #0f766e; display: inline-flex; font-size: 1.6rem; font-weight: 800; height: 64px; justify-content: center; margin-bottom: .8rem; width: 64px; }
+.visitor-success-panel h2 { font-size: 1.35rem; font-weight: 800; margin: 0 0 .45rem; }
+.visitor-success-panel p { color: #415466; margin: 0 0 1rem; }
+.visitor-summary-box { margin-bottom: 1rem; padding: .9rem 1rem; text-align: left; }
+.visitor-summary-box > div { align-items: center; display: flex; justify-content: space-between; gap: 1rem; padding: .5rem 0; }
+.visitor-summary-box > div + div { border-top: 1px solid #e5edf4; }
+.visitor-summary-box span { color: #64748b; font-size: .75rem; font-weight: 700; text-transform: uppercase; }
+.visitor-summary-box strong { font-size: .96rem; }
+@media (max-width: 575.98px) { .visitor-checkout-page { margin-left: -.75rem; margin-right: -.75rem; padding: 1.25rem .75rem 2rem; } .visitor-checkout-heading { padding: 1.2rem 1.25rem; } .visitor-checkout-body { padding: 1.25rem; } .visitor-action-row { flex-direction: column; } .visitor-action-row .btn { width: 100%; } }
+CSS);
+
+$this->registerJs(
+    '(function () {'
+    . 'const searchInput = document.getElementById("visitor-search");'
+    . 'const typedNameBox = document.getElementById("typed-visitor-name");'
+    . 'const suggestionBox = document.getElementById("visitor-search-results");'
+    . 'const form = document.getElementById("visitor-checkout-form");'
+    . 'const checkoutStep = document.getElementById("checkout-step");'
+    . 'const checkoutVisitId = document.getElementById("checkout-visit-id");'
+    . 'const searchUrl = ' . json_encode($searchUrl, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) . ';'
+    . 'if (!searchInput || !suggestionBox || !form || !checkoutStep || !checkoutVisitId) { return; }'
+    . 'let selectedVisitorId = checkoutVisitId.value || "";'
+    . 'function updateWrittenName(name) {'
+    . 'if (!typedNameBox) { return; }'
+    . 'const value = (name || "").trim();'
+    . 'if (!value) { typedNameBox.classList.remove("is-visible"); typedNameBox.innerHTML = ""; return; }'
+    . 'typedNameBox.classList.add("is-visible");'
+    . 'typedNameBox.innerHTML = "<span>Written name</span><strong>" + value + "</strong>";'
+    . '}'
+    . 'function renderSuggestions(items) {'
+    . 'suggestionBox.innerHTML = "";'
+    . 'if (!items.length) { suggestionBox.classList.remove("is-visible"); return; }'
+    . 'items.forEach(function (item) {'
+    . 'const button = document.createElement("button");'
+    . 'button.type = "button";'
+    . 'button.className = "visitor-search-item";'
+    . 'button.dataset.id = String(item.id);'
+    . 'button.dataset.name = item.full_name;'
+    . 'button.dataset.phone = item.phone_number || "—";'
+    . 'button.dataset.checkin = item.check_in_time || "—";'
+    . 'button.dataset.pass = item.visitor_pass_number || "—";'
+    . 'button.innerHTML = "<strong>" + item.full_name + "</strong><small>" + (item.phone_number || "No phone number") + " • checked in " + (item.check_in_time || "—") + "</small>";'
+    . 'button.addEventListener("click", function () {'
+    . 'selectedVisitorId = String(item.id);'
+    . 'checkoutVisitId.value = selectedVisitorId;'
+    . 'searchInput.value = item.full_name;'
+    . 'updateWrittenName(item.full_name);'
+    . 'suggestionBox.classList.remove("is-visible");'
+    . 'suggestionBox.innerHTML = "";'
+    . 'const detailCard = document.querySelector(".visitor-details-card");'
+    . 'if (!detailCard) {'
+    . 'const wrapper = document.createElement("div");'
+    . 'wrapper.className = "visitor-details-card";'
+    . 'wrapper.innerHTML = "<span class=\"visitor-checkout-eyebrow\">Selected visitor</span><h2>" + item.full_name + "</h2><div class=\"visitor-detail-grid\"><div><span>Phone</span><strong>" + (item.phone_number || "—") + "</strong></div><div><span>Check-in time</span><strong>" + (item.check_in_time || "—") + "</strong></div><div><span>Pass</span><strong>" + (item.visitor_pass_number || "—") + "</strong></div></div>";'
+    . 'form.insertBefore(wrapper, form.querySelector(".visitor-action-row"));'
+    . '} else {'
+    . 'detailCard.innerHTML = "<span class=\"visitor-checkout-eyebrow\">Selected visitor</span><h2>" + item.full_name + "</h2><div class=\"visitor-detail-grid\"><div><span>Phone</span><strong>" + (item.phone_number || "—") + "</strong></div><div><span>Check-in time</span><strong>" + (item.check_in_time || "—") + "</strong></div><div><span>Pass</span><strong>" + (item.visitor_pass_number || "—") + "</strong></div></div>";'
+    . '}'
+    . '});'
+    . 'suggestionBox.appendChild(button);'
+    . '});'
+    . 'suggestionBox.classList.add("is-visible");'
+    . '}'
+    . 'let debounceTimer = null;'
+    . 'searchInput.addEventListener("input", function () {'
+    . 'const query = searchInput.value.trim();'
+    . 'updateWrittenName(query);'
+    . 'if (query.length < 1) { suggestionBox.classList.remove("is-visible"); suggestionBox.innerHTML = ""; return; }'
+    . 'clearTimeout(debounceTimer);'
+    . 'debounceTimer = setTimeout(function () {'
+    . 'fetch(searchUrl + "?q=" + encodeURIComponent(query), { headers: { "X-Requested-With": "XMLHttpRequest" } })'
+    . '.then(function (response) { return response.json(); })'
+    . '.then(function (items) { if (!Array.isArray(items)) { renderSuggestions([]); return; } renderSuggestions(items); })'
+    . '.catch(function () { renderSuggestions([]); });'
+    . '}, 250);'
+    . '});'
+    . 'form.addEventListener("submit", function (event) {'
+    . 'if (!selectedVisitorId) {'
+    . 'event.preventDefault();'
+    . 'if (!searchInput.value.trim()) { searchInput.focus(); } else { alert("Please select an active visitor from the suggestions list."); }'
+    . 'return;'
+    . '}'
+    . 'checkoutVisitId.value = selectedVisitorId;'
+    . 'checkoutStep.value = checkoutStep.value === "preview" ? "confirm" : "preview";'
+    . '});'
+    . '})();'
+);
 ?>

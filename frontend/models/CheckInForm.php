@@ -22,18 +22,20 @@ class CheckInForm extends Model
 {
     public string $full_name = '';
     public string $phone_number = '';
+    public string $gender = '';
     public string $national_id = '';
     public string $origin = '';
     public string $destination = '';
     public string $purpose = '';
     public ?int $host_user_id = null;
+    public string $host_name = '';
     public string $signature_data = '';
 
     public function rules(): array
     {
         return [
-            [['full_name', 'phone_number', 'origin', 'host_user_id', 'purpose', 'signature_data'], 'required'],
-            [['full_name', 'phone_number', 'national_id', 'origin', 'destination', 'purpose'], 'string', 'max' => 255],
+            [['full_name', 'phone_number', 'gender', 'origin', 'host_name', 'signature_data'], 'required'],
+            [['full_name', 'phone_number', 'national_id', 'origin', 'destination', 'purpose', 'gender', 'host_name'], 'string', 'max' => 255],
             [['host_user_id'], 'integer'],
             [['host_user_id'], 'exist', 'skipOnError' => true, 'targetClass' => User::class, 'targetAttribute' => ['host_user_id' => 'id']],
             [['signature_data'], 'string'],
@@ -43,7 +45,8 @@ class CheckInForm extends Model
                 'pattern' => '/^[0-9+\-\s()]{7,30}$/',
                 'message' => 'Please enter a valid phone number.',
             ],
-            [['full_name', 'phone_number', 'national_id', 'origin', 'destination', 'purpose'], 'trim'],
+            [['gender'], 'in', 'range' => ['Male', 'Female', 'Other']],
+            [['full_name', 'phone_number', 'national_id', 'origin', 'destination', 'purpose', 'gender', 'host_name'], 'trim'],
             [['national_id', 'phone_number'], 'validateNotBlacklisted'],
             [['signature_data'], 'validateSignatureData'],
         ];
@@ -54,10 +57,12 @@ class CheckInForm extends Model
         return [
             'full_name' => 'Full Name',
             'phone_number' => 'Phone Number',
-            'national_id' => 'National ID (optional)',
+            'gender' => 'Gender',
+            'national_id' => 'National ID',
             'origin' => 'Origin / Where Coming From',
             'destination' => 'Destination',
             'host_user_id' => 'Host',
+            'host_name' => 'Host',
             'purpose' => 'Purpose of Visit',
             'signature_data' => 'Signature',
         ];
@@ -82,8 +87,9 @@ class CheckInForm extends Model
             return;
         }
 
-        if (Blacklist::isBlocked($this->national_id, $this->phone_number)) {
-            $match = Blacklist::findActiveMatch($this->national_id, $this->phone_number);
+        $nationalId = trim((string) $this->national_id);
+        if (Blacklist::isBlocked($nationalId, $this->phone_number)) {
+            $match = Blacklist::findActiveMatch($nationalId, $this->phone_number);
             $reason = $match !== null && $match->reason ? $match->reason : 'Security restriction';
             NotificationService::createNotification('Security alert: blacklisted check-in attempt.', 'danger');
             $this->addError($attribute, 'Check-in denied. This visitor is blacklisted. Reason: ' . $reason);
@@ -93,6 +99,7 @@ class CheckInForm extends Model
     public function validateSignatureData(string $attribute): void
     {
         if ($this->signature_data === '') {
+            $this->addError($attribute, 'Please sign in the signature pad before submitting.');
             return;
         }
 
@@ -110,13 +117,22 @@ class CheckInForm extends Model
         $transaction = null;
 
         try {
+            $matchedHost = null;
+            $hostName = trim((string) $this->host_name);
+            if ($hostName !== '') {
+                $matchedHost = User::find()->where(['username' => $hostName, 'status' => User::STATUS_ACTIVE])->one();
+            }
+            if ($matchedHost !== null) {
+                $this->host_user_id = (int) $matchedHost->id;
+            }
+
             $transaction = Yii::$app->db->beginTransaction();
             $visitor = null;
-            
+
             if ($this->national_id !== '') {
                 $visitor = Visitor::findOne(['national_id' => $this->national_id]);
             }
-            
+
             if ($visitor === null) {
                 $visitor = new Visitor();
                 $visitor->national_id = $this->national_id !== '' ? $this->national_id : null;
@@ -142,7 +158,7 @@ class CheckInForm extends Model
 
             $visit = new Visit();
             $visit->visitor_id = (int) $visitor->id;
-            $visit->host_user_id = $this->host_user_id;
+            $visit->host_user_id = $this->host_user_id ?: null;
             $visit->purpose = $this->purpose;
             $visit->from_location = $this->origin;
             $visit->destination = $this->destination;
@@ -160,7 +176,7 @@ class CheckInForm extends Model
             }
 
             $transaction->commit();
-            AuditLogService::logAction('check-in', 'Visitor checked in: ' . $visitor->full_name);
+            AuditLogService::logAction('check-in', 'Visitor checked in: ' . $visitor->full_name . ' (gender: ' . $this->gender . ')');
             NotificationService::createNotification('Visitor checked in: ' . $visitor->full_name, 'success');
             return $visit;
         } catch (\Throwable $e) {

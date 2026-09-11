@@ -78,18 +78,18 @@ $excelUrl = Url::to(array_merge(['/admin/export-excel'], $exportQuery));
     </section>
 </div>
 <?php $this->registerCss(<<<'CSS'
-.time-report-page { --reports-yellow: #fff200; --reports-ink: #1a1a1a; --reports-border: #eeeeee; color: var(--reports-ink); }
+.time-report-page { --reports-yellow: #fff200; --reports-ink: #da6868; --reports-border: #6f57c6; color: var(--reports-ink); }
 .reports-eyebrow { color: #6b6b6b; font-size: .72rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
-.report-table-panel { background: #fff; border: 1px solid var(--reports-border); }
+.report-table-panel { background: #38cb58; border: 1px solid var(--reports-border); }
 .report-table-heading { padding: 1.15rem; }
 .report-table-heading h2 { font-size: 1rem; font-weight: 800; margin: 0; }
 .report-table-heading p { color: #777; font-size: .8rem; margin: .25rem 0 0; }
-.report-table-panel thead th { background: #fafafa; border-bottom: 1px solid var(--reports-border); color: #777; font-size: .68rem; letter-spacing: .06em; padding: .75rem 1.15rem; text-transform: uppercase; }
+.report-table-panel thead th { background: #a1be44; border-bottom: 1px solid var(--reports-border); color: #777; font-size: .68rem; letter-spacing: .06em; padding: .75rem 1.15rem; text-transform: uppercase; }
 .report-table-panel tbody td { border-color: var(--reports-border); padding: .8rem 1.15rem; }
 .report-status { display: inline-block; font-size: .72rem; font-weight: 800; padding: .3rem .5rem; }
-.report-status--inside { background: #e8f5ee; color: #167345; }
-.report-status--out { background: #edf0f2; color: #555; }
-.report-filter { align-items: end; background: #fafafa; border: 1px solid var(--reports-border); display: flex; gap: .75rem; padding: 1rem 1.15rem; }
+.report-status--inside { background: #c73396; color: #167345; }
+.report-status--out { background: #49a6e3; color: #555; }
+.report-filter { align-items: end; background: #3bdd61; border: 1px solid var(--reports-border); display: flex; gap: .75rem; padding: 1rem 1.15rem; }
 .report-filter .form-label { font-size: .78rem; font-weight: 700; margin-bottom: .35rem; }
 .report-filter .form-control { max-width: 250px; }
 @media print {

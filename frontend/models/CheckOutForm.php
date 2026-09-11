@@ -8,7 +8,7 @@ use common\models\Visit;
 use yii\base\Model;
 
 /**
- * Visitor check-out form (QR hash or name / national ID search).
+ * Visitor check-out form (name search for active visitors).
  */
 class CheckOutForm extends Model
 {
@@ -20,17 +20,7 @@ class CheckOutForm extends Model
         return [
             [['qr_code_hash', 'search'], 'trim'],
             [['qr_code_hash', 'search'], 'string', 'max' => 255],
-            [
-                ['qr_code_hash'],
-                'required',
-                'when' => static function (self $model): bool {
-                    return $model->search === '';
-                },
-                'whenClient' => "function (attribute, value) {
-                    return !$('#checkoutform-search').val();
-                }",
-                'message' => 'Enter a QR code or search by name / National ID.',
-            ],
+            [['search'], 'required', 'message' => 'Please type the visitor name.'],
         ];
     }
 
@@ -38,7 +28,7 @@ class CheckOutForm extends Model
     {
         return [
             'qr_code_hash' => 'QR Code',
-            'search' => 'Search (Name or National ID)',
+            'search' => 'Visitor name',
         ];
     }
 

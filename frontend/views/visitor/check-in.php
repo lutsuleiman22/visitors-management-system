@@ -5,12 +5,15 @@ declare(strict_types=1);
 /** @var yii\web\View $this */
 /** @var frontend\models\CheckInForm $model */
 /** @var array<int, string> $hosts */
+/** @var string $step */
+/** @var common\models\Visit|null $visit */
 
 use yii\bootstrap5\ActiveForm;
 use yii\helpers\Html;
 
 $this->title = 'Visitor Check-In';
 $this->params['breadcrumbs'][] = $this->title;
+$stepName = $step ?? 'form';
 ?>
 <div class="visitor-check-in-page">
     <div class="visitor-check-in-shell">
@@ -20,28 +23,66 @@ $this->params['breadcrumbs'][] = $this->title;
                 <div>
                     <span class="visitor-check-in-eyebrow">Self-service registration</span>
                     <h1><?= Html::encode($this->title) ?></h1>
-                    <p>Please fill your details to register your visit.</p>
+                    <p>Please follow the check-in steps below.</p>
                 </div>
             </div>
             <div class="visitor-check-in-body">
-                    <?php $form = ActiveForm::begin([
-                        'id' => 'check-in-form',
-                        'options' => ['autocomplete' => 'off'],
-                    ]); ?>
-
+                <?php if ($stepName === 'success' && isset($visit)): ?>
+                    <div class="alert alert-success">
+                        <h2 class="h4 mb-2">Check-in successful</h2>
+                        <p class="mb-2">Visitor <strong><?= Html::encode($visit->visitor?->full_name ?? 'Unknown visitor') ?></strong> has been registered successfully.</p>
+                        <p class="mb-3">Pass number: <strong><?= Html::encode((string) ($visit->visitor_pass_number ?? '')) ?></strong></p>
+                    </div>
+                    <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center">
+                        <?= Html::a('New Check-In', ['check-in'], ['class' => 'btn btn-outline-secondary']) ?>
+                        <?= Html::a('Print Pass', ['pass', 'id' => (int) $visit->id], ['class' => 'btn btn-checkin']) ?>
+                    </div>
+                <?php elseif ($stepName === 'preview'): ?>
+                    <div class="mb-3">
+                        <span class="badge bg-dark-subtle text-dark">Step 2 of 4</span>
+                        <h2 class="h4 mt-2 mb-1">Review Visitor Details</h2>
+                        <p class="text-muted mb-0">Check the information before saving the visitor registration.</p>
+                    </div>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6"><div class="border rounded p-3"><strong>Full Name</strong><div><?= Html::encode($model->full_name) ?></div></div></div>
+                        <div class="col-md-6"><div class="border rounded p-3"><strong>Phone Number</strong><div><?= Html::encode($model->phone_number) ?></div></div></div>
+                        <div class="col-md-6"><div class="border rounded p-3"><strong>Gender</strong><div><?= Html::encode($model->gender ?: 'Not provided') ?></div></div></div>
+                        <div class="col-md-6"><div class="border rounded p-3"><strong>Origin</strong><div><?= Html::encode($model->origin ?: 'Not provided') ?></div></div></div>
+                        <div class="col-md-6"><div class="border rounded p-3"><strong>Destination</strong><div><?= Html::encode($model->destination ?: 'Not provided') ?></div></div></div>
+                        <div class="col-md-6"><div class="border rounded p-3"><strong>Host</strong><div><?= Html::encode($model->host_name ?: 'Not provided') ?></div></div></div>
+                    </div>
+                    <?php $form = ActiveForm::begin(['id' => 'check-in-confirm-form', 'options' => ['autocomplete' => 'off']]); ?>
+                    <?= Html::hiddenInput('step', 'confirm') ?>
+                    <?= Html::hiddenInput('CheckInForm[full_name]', $model->full_name) ?>
+                    <?= Html::hiddenInput('CheckInForm[phone_number]', $model->phone_number) ?>
+                    <?= Html::hiddenInput('CheckInForm[gender]', $model->gender) ?>
+                    <?= Html::hiddenInput('CheckInForm[origin]', $model->origin) ?>
+                    <?= Html::hiddenInput('CheckInForm[destination]', $model->destination) ?>
+                    <?= Html::hiddenInput('CheckInForm[host_name]', $model->host_name) ?>
+                    <?= Html::hiddenInput('CheckInForm[signature_data]', $model->signature_data) ?>
+                    <?= Html::hiddenInput('CheckInForm[national_id]', $model->national_id) ?>
+                    <?= Html::hiddenInput('CheckInForm[purpose]', $model->purpose) ?>
+                    <div class="visitor-check-in-actions">
+                        <?= Html::a('Back to Form', ['check-in'], ['class' => 'btn btn-link']) ?>
+                        <?= Html::submitButton('Confirm & Save', ['class' => 'btn btn-checkin btn-lg px-4']) ?>
+                    </div>
+                    <?php ActiveForm::end(); ?>
+                <?php else: ?>
+                    <div class="mb-3">
+                        <span class="badge bg-dark-subtle text-dark">Step 1 of 4</span>
+                        <h2 class="h4 mt-2 mb-1">Visitor Registration</h2>
+                        <p class="text-muted mb-0">Enter the visiting details below to begin the self-check-in process.</p>
+                    </div>
+                    <?php $form = ActiveForm::begin(['id' => 'check-in-form', 'options' => ['autocomplete' => 'off']]); ?>
+                    <?= Html::hiddenInput('step', 'preview') ?>
                     <?= $form->errorSummary($model, ['class' => 'alert alert-danger']) ?>
-
                     <?= $this->render('_form', ['form' => $form, 'model' => $model, 'hosts' => $hosts]) ?>
-
                     <div class="visitor-check-in-actions">
                         <?= Html::a('Check-Out Instead', ['check-out'], ['class' => 'btn btn-link']) ?>
-                        <?= Html::submitButton('Check In', [
-                            'class' => 'btn btn-checkin btn-lg px-4',
-                            'id' => 'btn-submit-checkin',
-                        ]) ?>
+                        <?= Html::submitButton('Continue to Review', ['class' => 'btn btn-checkin btn-lg px-4', 'id' => 'btn-submit-checkin']) ?>
                     </div>
-
                     <?php ActiveForm::end(); ?>
+                <?php endif; ?>
             </div>
         </div>
     </div>
@@ -51,9 +92,11 @@ $this->params['breadcrumbs'][] = $this->title;
 $js = <<<'JS'
 (function () {
     const canvas = document.getElementById('signature-canvas');
+    if (!canvas) return;
     const context = canvas.getContext('2d');
     const signatureData = document.getElementById('signature-data');
     const form = document.getElementById('check-in-form');
+    const previewForm = document.getElementById('check-in-confirm-form');
     let drawing = false;
     let hasSignature = false;
 
@@ -66,7 +109,9 @@ $js = <<<'JS'
     function start(event) { drawing = true; context.beginPath(); context.moveTo(position(event).x, position(event).y); event.preventDefault(); }
     function draw(event) { if (!drawing) return; const point = position(event); context.lineTo(point.x, point.y); context.stroke(); hasSignature = true; event.preventDefault(); }
     function syncSignature() {
-        signatureData.value = canvas.toDataURL('image/png');
+        if (canvas && signatureData) {
+            signatureData.value = canvas.toDataURL('image/png');
+        }
     }
     function stop() {
         if (drawing) syncSignature();
@@ -82,20 +127,34 @@ $js = <<<'JS'
     canvas.addEventListener('pointerleave', stop);
     document.getElementById('clear-signature').addEventListener('click', function () {
         context.clearRect(0, 0, canvas.width, canvas.height);
-        signatureData.value = '';
+        if (signatureData) signatureData.value = '';
         hasSignature = false;
     });
-    form.addEventListener('submit', function (event) {
+
+    const handleSubmit = function (event) {
         if (hasSignature) syncSignature();
-        if (!hasSignature || !signatureData.value) {
+        if (!hasSignature || !signatureData || !signatureData.value) {
             event.preventDefault();
-            document.getElementById('signature-status').textContent = 'Please provide a signature.';
+            const status = document.getElementById('signature-status');
+            if (status) status.textContent = 'Please provide a signature.';
             return;
         }
 
         const submitButton = document.getElementById('btn-submit-checkin');
-        submitButton.disabled = true;
-        submitButton.textContent = 'Processing...';
+        if (submitButton) {
+            submitButton.disabled = true;
+            submitButton.textContent = 'Processing...';
+        }
+    };
+
+    if (form) form.addEventListener('submit', handleSubmit);
+    if (previewForm) previewForm.addEventListener('submit', function (event) {
+        if (signatureData && signatureData.value) {
+            return;
+        }
+        event.preventDefault();
+        const status = document.getElementById('signature-status');
+        if (status) status.textContent = 'Please provide a signature.';
     });
 })();
 JS;
@@ -107,10 +166,22 @@ $this->registerCss(<<<'CSS'
 .visitor-check-in-heading { align-items: flex-start; background: #183b31; color: #fff; display: flex; gap: 1rem; padding: 2rem 2.25rem; }
 .visitor-check-in-mark { align-items: center; background: #b9d8c7; color: #183b31; display: inline-flex; flex: 0 0 2.8rem; font-size: .75rem; font-weight: 900; height: 2.8rem; justify-content: center; letter-spacing: .04em; }
 .visitor-check-in-eyebrow { color: #b9d8c7; display: block; font-size: .68rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
-.visitor-check-in-heading h1 { font-size: 1.65rem; font-weight: 800; margin: .3rem 0 .35rem; }.visitor-check-in-heading p { color: #d8e8e0; margin: 0; }
-.visitor-check-in-body { padding: 2rem 2.25rem 2.25rem; }.visitor-check-in-body .form-label { color: #33443d; font-size: .82rem; font-weight: 700; }.visitor-check-in-body .form-control, .visitor-check-in-body .form-select { border-color: #d7e1dc; border-radius: 8px; min-height: 2.8rem; padding: .7rem .8rem; }.visitor-check-in-body textarea.form-control { min-height: 6rem; }.visitor-check-in-body .form-control:focus, .visitor-check-in-body .form-select:focus { border-color: #4f9b72; box-shadow: 0 0 0 .2rem rgba(79, 155, 114, .16); }
-.visitor-check-in-body .row { row-gap: .25rem; }.visitor-check-in-body .field-checkinform-signature_data { display: none; }.signature-box { background: #f8fbf9; border: 1px solid #d7e1dc; border-radius: 8px; max-width: 380px; padding: .55rem; }.signature-pad { display: block; height: 130px; max-width: 350px; touch-action: none; width: 100%; }.visitor-check-in-body canvas { border-color: #d7e1dc !important; border-radius: 6px !important; }
-.visitor-check-in-actions { align-items: center; border-top: 1px solid #e8eeeb; display: flex; gap: 1rem; justify-content: space-between; margin-top: 1.25rem; padding-top: 1.25rem; }.visitor-check-in-actions .btn-link { color: #587067; text-decoration: none; }.btn-checkin { background: #8bc9a5; border: 0; border-radius: 8px; color: #123025; font-weight: 800; min-width: 190px; }.btn-checkin:hover, .btn-checkin:focus { background: #6fb88d; color: #10291f; }
-@media (max-width: 575.98px) { .visitor-check-in-page { margin-left: -0.75rem; margin-right: -0.75rem; padding: 1.25rem .75rem 2rem; }.visitor-check-in-heading { padding: 1.5rem; }.visitor-check-in-body { padding: 1.5rem; }.visitor-check-in-actions { align-items: stretch; flex-direction: column-reverse; }.visitor-check-in-actions .btn-checkin { width: 100%; }.visitor-check-in-actions .btn-link { align-self: center; } }
+.visitor-check-in-heading h1 { font-size: 1.65rem; font-weight: 800; margin: .3rem 0 .35rem; }
+.visitor-check-in-heading p { color: #d8e8e0; margin: 0; }
+.visitor-check-in-body { padding: 2rem 2.25rem 2.25rem; }
+.visitor-check-in-body .form-label { color: #33443d; font-size: .82rem; font-weight: 700; }
+.visitor-check-in-body .form-control, .visitor-check-in-body .form-select { border-color: #d7e1dc; border-radius: 8px; min-height: 2.8rem; padding: .7rem .8rem; }
+.visitor-check-in-body textarea.form-control { min-height: 6rem; }
+.visitor-check-in-body .form-control:focus, .visitor-check-in-body .form-select:focus { border-color: #4f9b72; box-shadow: 0 0 0 .2rem rgba(79, 155, 114, .16); }
+.visitor-check-in-body .row { row-gap: .25rem; }
+.visitor-check-in-body .field-checkinform-signature_data { display: none; }
+.signature-box { background: #f8fbf9; border: 1px solid #d7e1dc; border-radius: 8px; max-width: 380px; padding: .55rem; }
+.signature-pad { display: block; height: 130px; max-width: 350px; touch-action: none; width: 100%; }
+.visitor-check-in-body canvas { border-color: #d7e1dc !important; border-radius: 6px !important; }
+.visitor-check-in-actions { align-items: center; border-top: 1px solid #e8eeeb; display: flex; gap: 1rem; justify-content: space-between; margin-top: 1.25rem; padding-top: 1.25rem; }
+.visitor-check-in-actions .btn-link { color: #587067; text-decoration: none; }
+.btn-checkin { background: #8bc9a5; border: 0; border-radius: 8px; color: #123025; font-weight: 800; min-width: 190px; }
+.btn-checkin:hover, .btn-checkin:focus { background: #6fb88d; color: #10291f; }
+@media (max-width: 575.98px) { .visitor-check-in-page { margin-left: -0.75rem; margin-right: -0.75rem; padding: 1.25rem .75rem 2rem; } .visitor-check-in-heading { padding: 1.5rem; } .visitor-check-in-body { padding: 1.5rem; } .visitor-check-in-actions { align-items: stretch; flex-direction: column-reverse; } .visitor-check-in-actions .btn-checkin { width: 100%; } .visitor-check-in-actions .btn-link { align-self: center; } }
 CSS);
 ?>

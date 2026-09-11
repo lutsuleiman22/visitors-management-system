@@ -55,14 +55,14 @@ $this->params['breadcrumbs'][] = 'Pass';
                         <div class="col-8">
                             <h2 class="h4 fw-bold mb-1"><?= Html::encode($visitor->full_name) ?></h2>
                             <dl class="row mb-0 small">
-                                <dt class="col-5 text-muted">National ID</dt>
-                                <dd class="col-7"><?= Html::encode($visitor->national_id ?: '—') ?></dd>
                                 <dt class="col-5 text-muted">Phone</dt>
                                 <dd class="col-7"><?= Html::encode($visitor->phone_number) ?></dd>
                                 <dt class="col-5 text-muted">Host</dt>
                                 <dd class="col-7"><?= Html::encode($host->username ?? '—') ?></dd>
-                                <dt class="col-5 text-muted">Purpose</dt>
-                                <dd class="col-7"><?= Html::encode($visit->purpose ?: '—') ?></dd>
+                                <dt class="col-5 text-muted">Origin</dt>
+                                <dd class="col-7"><?= Html::encode($visit->from_location ?: '—') ?></dd>
+                                <dt class="col-5 text-muted">Destination</dt>
+                                <dd class="col-7"><?= Html::encode($visit->destination ?: '—') ?></dd>
                                 <dt class="col-5 text-muted">Check-In</dt>
                                 <dd class="col-7"><?= Html::encode($checkIn) ?></dd>
                                 <dt class="col-5 text-muted">Status</dt>

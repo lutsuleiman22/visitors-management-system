@@ -37,7 +37,7 @@ $this->params['breadcrumbs'][] = $this->title;
     </div>
 </div>
 <?php $this->registerCss(<<<'CSS'
-.reports-page { --reports-yellow: #fff200; --reports-ink: #1a1a1a; --reports-border: #eeeeee; color: var(--reports-ink); }
+.reports-page { --reports-yellow: #1fa651; --reports-ink: #1a1a1a; --reports-border: #eeeeee; color: var(--reports-ink); }
 .reports-eyebrow { color: #6b6b6b; font-size: .72rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
 .report-period-card { background: #fff; border: 1px solid var(--reports-border); color: var(--reports-ink); display: block; height: 100%; padding: 1.35rem; text-decoration: none; }
 .report-period-card:hover { border-color: var(--reports-yellow); color: var(--reports-ink); }

@@ -14,7 +14,7 @@ $this->params['meta_description'] = 'Self-service visitor check-in and check-out
         <div class="position-relative">
             <h1 class="display-5 fw-bold mb-3">Visitor Management</h1>
             <p class="lead opacity-75 mb-4 hero-lead">
-                Check in at reception, capture your photo, and receive a printable visitor pass with QR code.
+                Welcome! we're happy to have you here .We look forward to know bitter.
             </p>
             <div class="d-flex gap-2 flex-wrap">
                 <?= Html::a('Visitor Check-In', ['/visitor/check-in'], [
@@ -33,7 +33,7 @@ $this->params['meta_description'] = 'Self-service visitor check-in and check-out
                 <div class="card-body">
                     <h2 class="h5 fw-bold">1. Check In</h2>
                     <p class="text-body-secondary small mb-0">
-                        Enter your details, select your host, and capture a webcam photo.
+                        welome!. please complete the check-in form below to register your visit
                     </p>
                 </div>
             </div>
@@ -43,7 +43,7 @@ $this->params['meta_description'] = 'Self-service visitor check-in and check-out
                 <div class="card-body">
                     <h2 class="h5 fw-bold">2. Get Your Pass</h2>
                     <p class="text-body-secondary small mb-0">
-                        Print or save your badge with a unique QR code for security and checkout.
+                        your pass confirms your visit and provides quick acess to your information 
                     </p>
                 </div>
             </div>
@@ -53,7 +53,7 @@ $this->params['meta_description'] = 'Self-service visitor check-in and check-out
                 <div class="card-body">
                     <h2 class="h5 fw-bold">3. Check Out</h2>
                     <p class="text-body-secondary small mb-0">
-                        Scan your QR code or search by name / National ID when leaving.
+                        finish your check out by confirming your check-out 
                     </p>
                 </div>
             </div>

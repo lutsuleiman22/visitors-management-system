@@ -51,7 +51,7 @@ $items = [
 <header id="header">
     <?php NavBar::begin(
         [
-            'brandLabel' => 'Man Creative Visitor System',
+            'brandLabel' => 'Visitor Management System',
             'brandUrl' => Yii::$app->homeUrl,
             'options' => ['class' => 'navbar-expand-md navbar-dark bg-dark fixed-top']
         ],

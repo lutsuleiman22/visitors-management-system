@@ -11,7 +11,7 @@ use yii\bootstrap5\Html;
 
 $this->title = 'Create a new account';
 $this->params['breadcrumbs'][] = $this->title;
-$this->params['meta_description'] = 'Create a new account for Man Creative Visitor System.';
+$this->params['meta_description'] = 'Create a new account for Visitor System.';
 $this->params['meta_keywords'] = 'visitor system, signup, register, create account';
 $htmlIcon = <<<HTML
 {label}<div class="input-group"><span class="input-group-text" aria-hidden="true">%s</span>{input}</div>{error}{hint}
@@ -40,7 +40,7 @@ $labelOptions = ['class' => 'form-label fw-semibold small'];
                             Create Your<br>Account
                         </h2>
                         <p class="opacity-75 mb-0 login-brand-text">
-                            Join us and start managing visitor access with Man Creative Visitor System.
+                            Join us and start managing visitor access with Visitor System.
                         </p>
                     </div>
                 </div>
