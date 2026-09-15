@@ -3,6 +3,7 @@
 /** @var yii\bootstrap5\ActiveForm $form */
 /** @var frontend\models\CheckInForm $model */
 /** @var array<int, string> $hosts */
+/** @var array<string, string> $departments */
 use yii\helpers\Html;
 ?>
 <div class="row g-3">
@@ -12,7 +13,8 @@ use yii\helpers\Html;
         <?= $form->field($model, 'gender')->dropDownList(['Male' => 'Male', 'Female' => 'Female', 'Other' => 'Other'], ['prompt' => 'Select gender']) ?>
         <?= $form->field($model, 'origin')->textInput(['maxlength' => true, 'placeholder' => 'Where are you coming from?']) ?>
         <?= $form->field($model, 'destination')->textInput(['maxlength' => true, 'placeholder' => 'Where are you going?']) ?>
-        <?= $form->field($model, 'host_name')->textInput(['maxlength' => true, 'list' => 'host-list', 'placeholder' => 'Search or type host name']) ?>
+        <?= $form->field($model, 'department_code')->dropDownList($departments, ['prompt' => 'Select department (optional)']) ?>
+        <?= $form->field($model, 'host_name')->textInput(['maxlength' => true, 'list' => 'host-list', 'placeholder' => 'Search or type host name (optional)']) ?>
         <datalist id="host-list">
             <?php foreach ($hosts as $id => $name): ?>
                 <option value="<?= Html::encode($name) ?>"><?= Html::encode($name) ?></option>

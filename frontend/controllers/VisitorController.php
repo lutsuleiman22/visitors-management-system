@@ -83,6 +83,7 @@ class VisitorController extends Controller
         $step = $request->post('step', 'form');
         $model = new CheckInForm();
         $hosts = CheckInForm::hostList();
+        $departments = CheckInForm::departmentList();
 
         if ($request->isPost) {
             $post = $request->post();
@@ -91,10 +92,10 @@ class VisitorController extends Controller
             if ($step === 'preview') {
                 if ($model->validate()) {
                     Yii::$app->session->set($this->getCheckInSessionKey(), $model->attributes);
-                    return $this->render('check-in', ['model' => $model, 'hosts' => $hosts, 'step' => 'preview']);
+                    return $this->render('check-in', ['model' => $model, 'hosts' => $hosts, 'departments' => $departments, 'step' => 'preview']);
                 }
 
-                return $this->render('check-in', ['model' => $model, 'hosts' => $hosts, 'step' => 'form']);
+                return $this->render('check-in', ['model' => $model, 'hosts' => $hosts, 'departments' => $departments, 'step' => 'form']);
             }
 
             if ($step === 'confirm') {
@@ -114,16 +115,16 @@ class VisitorController extends Controller
                     NotificationService::createNotification('New visitor checked in.', 'success');
                     Yii::$app->session->setFlash('success', 'Check-in successful. Please print or save your visitor pass.');
 
-                    return $this->render('check-in', ['model' => $model, 'hosts' => $hosts, 'step' => 'success', 'visit' => $visit]);
+                    return $this->render('check-in', ['model' => $model, 'hosts' => $hosts, 'departments' => $departments, 'step' => 'success', 'visit' => $visit]);
                 }
 
                 Yii::$app->session->setFlash('error', 'Check-in could not be saved. Please review the details and try again.');
-                return $this->render('check-in', ['model' => $model, 'hosts' => $hosts, 'step' => 'preview']);
+                return $this->render('check-in', ['model' => $model, 'hosts' => $hosts, 'departments' => $departments, 'step' => 'preview']);
             }
         }
 
         Yii::$app->session->remove($this->getCheckInSessionKey());
-        return $this->render('check-in', ['model' => $model, 'hosts' => $hosts, 'step' => 'form']);
+        return $this->render('check-in', ['model' => $model, 'hosts' => $hosts, 'departments' => $departments, 'step' => 'form']);
     }
 
     /**

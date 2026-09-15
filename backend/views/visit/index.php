@@ -69,6 +69,11 @@ $canCheckOut = in_array($role, ['admin', 'reception'], true);
                 'value' => static fn (Visit $model): string => BranchCatalog::all()[$model->branch_code] ?? 'Unassigned',
             ],
             [
+                'attribute' => 'department_code',
+                'label' => 'Department',
+                'value' => static fn (Visit $model): string => $model->department_code ?: '—',
+            ],
+            [
                 'label' => 'Checked In By',
                 'value' => static fn (Visit $model): string => $model->checkedInBy?->username ?? 'Unknown / legacy',
             ],

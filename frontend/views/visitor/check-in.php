@@ -5,6 +5,7 @@ declare(strict_types=1);
 /** @var yii\web\View $this */
 /** @var frontend\models\CheckInForm $model */
 /** @var array<int, string> $hosts */
+/** @var array<string, string> $departments */
 /** @var string $step */
 /** @var common\models\Visit|null $visit */
 
@@ -49,6 +50,7 @@ $stepName = $step ?? 'form';
                         <div class="col-md-6"><div class="border rounded p-3"><strong>Gender</strong><div><?= Html::encode($model->gender ?: 'Not provided') ?></div></div></div>
                         <div class="col-md-6"><div class="border rounded p-3"><strong>Origin</strong><div><?= Html::encode($model->origin ?: 'Not provided') ?></div></div></div>
                         <div class="col-md-6"><div class="border rounded p-3"><strong>Destination</strong><div><?= Html::encode($model->destination ?: 'Not provided') ?></div></div></div>
+                        <div class="col-md-6"><div class="border rounded p-3"><strong>Department</strong><div><?= Html::encode($model->department_code ? (frontend\models\CheckInForm::departmentList()[$model->department_code] ?? $model->department_code) : 'Not provided') ?></div></div></div>
                         <div class="col-md-6"><div class="border rounded p-3"><strong>Host</strong><div><?= Html::encode($model->host_name ?: 'Not provided') ?></div></div></div>
                     </div>
                     <?php $form = ActiveForm::begin(['id' => 'check-in-confirm-form', 'options' => ['autocomplete' => 'off']]); ?>
@@ -59,6 +61,7 @@ $stepName = $step ?? 'form';
                     <?= Html::hiddenInput('CheckInForm[origin]', $model->origin) ?>
                     <?= Html::hiddenInput('CheckInForm[destination]', $model->destination) ?>
                     <?= Html::hiddenInput('CheckInForm[host_name]', $model->host_name) ?>
+                    <?= Html::hiddenInput('CheckInForm[department_code]', $model->department_code) ?>
                     <?= Html::hiddenInput('CheckInForm[signature_data]', $model->signature_data) ?>
                     <?= Html::hiddenInput('CheckInForm[national_id]', $model->national_id) ?>
                     <?= Html::hiddenInput('CheckInForm[purpose]', $model->purpose) ?>
@@ -76,7 +79,7 @@ $stepName = $step ?? 'form';
                     <?php $form = ActiveForm::begin(['id' => 'check-in-form', 'options' => ['autocomplete' => 'off']]); ?>
                     <?= Html::hiddenInput('step', 'preview') ?>
                     <?= $form->errorSummary($model, ['class' => 'alert alert-danger']) ?>
-                    <?= $this->render('_form', ['form' => $form, 'model' => $model, 'hosts' => $hosts]) ?>
+                    <?= $this->render('_form', ['form' => $form, 'model' => $model, 'hosts' => $hosts, 'departments' => $departments]) ?>
                     <div class="visitor-check-in-actions">
                         <?= Html::a('Check-Out Instead', ['check-out'], ['class' => 'btn btn-link']) ?>
                         <?= Html::submitButton('Continue to Review', ['class' => 'btn btn-checkin btn-lg px-4', 'id' => 'btn-submit-checkin']) ?>

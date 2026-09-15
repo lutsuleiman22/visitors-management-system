@@ -26,6 +26,9 @@ use yii\helpers\Html;
         <div class="col-md-6">
             <?= $form->field($model, 'branch_code')->dropDownList($branches, ['prompt' => 'Select PBZ branch']) ?>
         </div>
+        <div class="col-md-6">
+            <?= $form->field($model, 'department_code')->textInput(['maxlength' => true, 'placeholder' => 'Optional department']) ?>
+        </div>
         <div class="col-md-8">
             <?= $form->field($model, 'purpose')->textInput(['maxlength' => true]) ?>
         </div>

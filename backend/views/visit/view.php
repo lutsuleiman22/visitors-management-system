@@ -73,6 +73,10 @@ $canCheckOut = in_array($role, ['admin', 'reception'], true);
                 'attribute' => 'host_user_id',
                 'value' => $model->host->username ?? '—',
             ],
+            [
+                'attribute' => 'department_code',
+                'value' => $model->department_code ?: '—',
+            ],
             'purpose',
             'qr_code_hash',
             'status',

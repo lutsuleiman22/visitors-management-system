@@ -18,4 +18,52 @@ final class BranchCatalog
             'pbz-nungwi' => 'PBZ Nungwi Branch',
         ];
     }
+
+    /** @return array<string, array<string, string>> */
+    public static function departments(): array
+    {
+        return [
+            'pbz-head-office' => [
+                'customer-service' => 'Customer Service',
+                'accounts' => 'Accounts',
+                'loans' => 'Loans',
+                'human-resources' => 'Human Resources',
+                'ict' => 'ICT',
+                'management' => 'Branch Management',
+            ],
+            'pbz-mwanakwerekwe' => [
+                'customer-service' => 'Customer Service',
+                'accounts' => 'Accounts',
+                'loans' => 'Loans',
+                'operations' => 'Operations',
+            ],
+            'pbz-malindi' => [
+                'customer-service' => 'Customer Service',
+                'accounts' => 'Accounts',
+                'loans' => 'Loans',
+                'operations' => 'Operations',
+            ],
+            'pbz-chakechake' => [
+                'customer-service' => 'Customer Service',
+                'accounts' => 'Accounts',
+                'loans' => 'Loans',
+            ],
+            'pbz-wete' => [
+                'customer-service' => 'Customer Service',
+                'accounts' => 'Accounts',
+                'operations' => 'Operations',
+            ],
+            'pbz-nungwi' => [
+                'customer-service' => 'Customer Service',
+                'accounts' => 'Accounts',
+                'operations' => 'Operations',
+            ],
+        ];
+    }
+
+    /** @return array<string, string> */
+    public static function departmentsFor(string $branchCode): array
+    {
+        return self::departments()[$branchCode] ?? [];
+    }
 }

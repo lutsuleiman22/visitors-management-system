@@ -16,6 +16,7 @@ use yii\db\ActiveRecord;
  * @property int $visitor_id
  * @property int|null $host_user_id
  * @property string|null $branch_code
+ * @property string|null $department_code
  * @property int|null $checked_in_by_user_id
  * @property int|null $checked_out_by_user_id
  * @property string|null $purpose
@@ -55,7 +56,7 @@ class Visit extends ActiveRecord
         return [
             [['visitor_id'], 'required'],
             [['visitor_id', 'host_user_id', 'checked_in_by_user_id', 'checked_out_by_user_id', 'created_at', 'updated_at'], 'integer'],
-            [['branch_code', 'purpose', 'from_location', 'destination', 'qr_code_hash', 'status', 'signature_path'], 'string', 'max' => 255],
+            [['branch_code', 'department_code', 'purpose', 'from_location', 'destination', 'qr_code_hash', 'status', 'signature_path'], 'string', 'max' => 255],
             [['visitor_pass_number'], 'string', 'max' => 32],
             [['visitor_pass_number'], 'unique'],
             [['check_in_time', 'check_out_time'], 'safe'],
@@ -87,6 +88,7 @@ class Visit extends ActiveRecord
             'visitor_id' => 'Visitor',
             'host_user_id' => 'Host',
                         'branch_code' => 'PBZ Branch',
+                        'department_code' => 'Department',
                         'checked_in_by_user_id' => 'Checked In By',
                         'checked_out_by_user_id' => 'Checked Out By',
             'purpose' => 'Purpose of Visit',

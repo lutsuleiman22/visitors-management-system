@@ -10,6 +10,7 @@ use common\models\Visit;
 use common\models\Visitor;
 use common\services\AuditLogService;
 use common\services\NotificationService;
+use common\services\BranchCatalog;
 use Yii;
 use yii\base\Model;
 use yii\helpers\ArrayHelper;
@@ -29,15 +30,17 @@ class CheckInForm extends Model
     public string $purpose = '';
     public ?int $host_user_id = null;
     public string $host_name = '';
+    public string $department_code = '';
     public string $signature_data = '';
 
     public function rules(): array
     {
         return [
-            [['full_name', 'phone_number', 'gender', 'origin', 'host_name', 'signature_data'], 'required'],
-            [['full_name', 'phone_number', 'national_id', 'origin', 'destination', 'purpose', 'gender', 'host_name'], 'string', 'max' => 255],
+            [['full_name', 'phone_number', 'gender', 'origin', 'signature_data'], 'required'],
+            [['full_name', 'phone_number', 'national_id', 'origin', 'destination', 'purpose', 'gender', 'host_name', 'department_code'], 'string', 'max' => 255],
             [['host_user_id'], 'integer'],
             [['host_user_id'], 'exist', 'skipOnError' => true, 'targetClass' => User::class, 'targetAttribute' => ['host_user_id' => 'id']],
+            [['department_code'], 'validateDepartment'],
             [['signature_data'], 'string'],
             [
                 ['phone_number'],
@@ -46,7 +49,7 @@ class CheckInForm extends Model
                 'message' => 'Please enter a valid phone number.',
             ],
             [['gender'], 'in', 'range' => ['Male', 'Female', 'Other']],
-            [['full_name', 'phone_number', 'national_id', 'origin', 'destination', 'purpose', 'gender', 'host_name'], 'trim'],
+            [['full_name', 'phone_number', 'national_id', 'origin', 'destination', 'purpose', 'gender', 'host_name', 'department_code'], 'trim'],
             [['national_id', 'phone_number'], 'validateNotBlacklisted'],
             [['signature_data'], 'validateSignatureData'],
         ];
@@ -63,6 +66,7 @@ class CheckInForm extends Model
             'destination' => 'Destination',
             'host_user_id' => 'Host',
             'host_name' => 'Host',
+            'department_code' => 'Department',
             'purpose' => 'Purpose of Visit',
             'signature_data' => 'Signature',
         ];
@@ -79,6 +83,23 @@ class CheckInForm extends Model
             'id',
             'username',
         );
+    }
+
+    /** @return array<string, string> */
+    public static function departmentList(): array
+    {
+        return BranchCatalog::departmentsFor((string) Yii::$app->session->get('pbz_branch', ''));
+    }
+
+    public function validateDepartment(string $attribute): void
+    {
+        if ($this->$attribute === '') {
+            return;
+        }
+
+        if (!array_key_exists($this->$attribute, self::departmentList())) {
+            $this->addError($attribute, 'Please select a department from this PBZ branch.');
+        }
     }
 
     public function validateNotBlacklisted(string $attribute): void
@@ -160,6 +181,7 @@ class CheckInForm extends Model
             $visit->visitor_id = (int) $visitor->id;
             $visit->host_user_id = $this->host_user_id ?: null;
                         $visit->branch_code = (string) Yii::$app->session->get('pbz_branch', '');
+                        $visit->department_code = $this->department_code !== '' ? $this->department_code : null;
             $visit->checked_in_by_user_id = Yii::$app->user->isGuest ? null : (int) Yii::$app->user->id;
             $visit->purpose = $this->purpose;
             $visit->from_location = $this->origin;
