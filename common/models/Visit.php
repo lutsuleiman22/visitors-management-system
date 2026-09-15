@@ -16,6 +16,8 @@ use yii\db\ActiveRecord;
  * @property int $visitor_id
  * @property int|null $host_user_id
  * @property string|null $branch_code
+ * @property int|null $checked_in_by_user_id
+ * @property int|null $checked_out_by_user_id
  * @property string|null $purpose
  * @property string|null $from_location
  * @property string|null $destination
@@ -52,7 +54,7 @@ class Visit extends ActiveRecord
     {
         return [
             [['visitor_id'], 'required'],
-            [['visitor_id', 'host_user_id', 'created_at', 'updated_at'], 'integer'],
+            [['visitor_id', 'host_user_id', 'checked_in_by_user_id', 'checked_out_by_user_id', 'created_at', 'updated_at'], 'integer'],
             [['branch_code', 'purpose', 'from_location', 'destination', 'qr_code_hash', 'status', 'signature_path'], 'string', 'max' => 255],
             [['visitor_pass_number'], 'string', 'max' => 32],
             [['visitor_pass_number'], 'unique'],
@@ -85,6 +87,8 @@ class Visit extends ActiveRecord
             'visitor_id' => 'Visitor',
             'host_user_id' => 'Host',
                         'branch_code' => 'PBZ Branch',
+                        'checked_in_by_user_id' => 'Checked In By',
+                        'checked_out_by_user_id' => 'Checked Out By',
             'purpose' => 'Purpose of Visit',
             'from_location' => 'Coming From',
             'destination' => 'Destination',
@@ -120,6 +124,16 @@ class Visit extends ActiveRecord
         return $this->hasOne(User::class, ['id' => 'host_user_id']);
     }
 
+    public function getCheckedInBy(): ActiveQuery
+    {
+        return $this->hasOne(User::class, ['id' => 'checked_in_by_user_id']);
+    }
+
+    public function getCheckedOutBy(): ActiveQuery
+    {
+        return $this->hasOne(User::class, ['id' => 'checked_out_by_user_id']);
+    }
+
     public function isCheckedIn(): bool
     {
         return $this->status === self::STATUS_CHECKED_IN && $this->check_out_time === null;
@@ -146,7 +160,7 @@ class Visit extends ActiveRecord
         return $number;
     }
 
-    public function checkOut(): bool
+    public function checkOut(?int $checkedOutByUserId = null): bool
     {
         if (!$this->isCheckedIn()) {
             return false;
@@ -157,6 +171,7 @@ class Visit extends ActiveRecord
             [
                 'status' => self::STATUS_CHECKED_OUT,
                 'check_out_time' => $checkOutTime,
+                'checked_out_by_user_id' => $checkedOutByUserId,
             ],
             [
                 'and',

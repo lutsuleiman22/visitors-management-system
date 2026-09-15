@@ -77,7 +77,15 @@ $canCheckOut = in_array($role, ['admin', 'reception'], true);
             'qr_code_hash',
             'status',
             'check_in_time',
+            [
+                'label' => 'Checked In By',
+                'value' => $model->checkedInBy?->username ?? 'Unknown / legacy',
+            ],
             'check_out_time',
+            [
+                'label' => 'Checked Out By',
+                'value' => $model->checkedOutBy?->username ?? ($model->check_out_time ? 'Unknown / legacy' : '—'),
+            ],
             [
                 'attribute' => 'created_at',
                 'format' => ['datetime', 'php:Y-m-d H:i:s'],

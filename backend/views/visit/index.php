@@ -68,6 +68,10 @@ $canCheckOut = in_array($role, ['admin', 'reception'], true);
                 'label' => 'PBZ Branch',
                 'value' => static fn (Visit $model): string => BranchCatalog::all()[$model->branch_code] ?? 'Unassigned',
             ],
+            [
+                'label' => 'Checked In By',
+                'value' => static fn (Visit $model): string => $model->checkedInBy?->username ?? 'Unknown / legacy',
+            ],
             'purpose',
             'from_location',
             'visitor_pass_number',
@@ -91,6 +95,10 @@ $canCheckOut = in_array($role, ['admin', 'reception'], true);
                 },
             ],
             'check_in_time',
+            [
+                'label' => 'Checked Out By',
+                'value' => static fn (Visit $model): string => $model->checkedOutBy?->username ?? ($model->check_out_time ? 'Unknown / legacy' : '—'),
+            ],
             [
                 'label' => 'Checkout Status',
                 'value' => static function (Visit $model): string {

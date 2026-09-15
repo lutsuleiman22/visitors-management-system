@@ -129,6 +129,7 @@ class VisitController extends BaseController
         $model->status = Visit::STATUS_CHECKED_IN;
         $model->qr_code_hash = Visit::generateQrCodeHash();
         $model->check_in_time = date('Y-m-d H:i:s');
+        $model->checked_in_by_user_id = Yii::$app->user->isGuest ? null : (int) Yii::$app->user->id;
 
         try {
             if ($model->load(Yii::$app->request->post()) && $model->save()) {
@@ -217,7 +218,7 @@ class VisitController extends BaseController
         try {
             if (!$model->isCheckedIn()) {
                 Yii::$app->session->setFlash('warning', 'This visit has already been checked out.');
-            } elseif ($model->checkOut()) {
+            } elseif ($model->checkOut(Yii::$app->user->isGuest ? null : (int) Yii::$app->user->id)) {
                 AuditLogService::logAction('check-out', 'Visitor checked out from visit #' . $model->id);
                 AuditLogger::log('CHECKOUT', 'Visit', $model->id, 'Visitor checked out');
                 NotificationService::createNotification('Visitor checked out: ' . ($model->visitor->full_name ?? 'Unknown'), 'success');

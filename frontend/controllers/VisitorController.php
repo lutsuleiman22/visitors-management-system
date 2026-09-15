@@ -140,7 +140,7 @@ class VisitorController extends Controller
             $model->load($request->post());
 
             if ($step === 'preview') {
-                $searchTerm = trim((string) $request->post('search', ''));
+                $searchTerm = trim($model->search);
                 $visitId = (int) $request->post('visit_id', 0);
 
                 if ($visitId > 0) {
@@ -171,7 +171,7 @@ class VisitorController extends Controller
                     return $this->redirect(['checkout-page']);
                 }
 
-                if ($selectedVisit->checkOut()) {
+                if ($selectedVisit->checkOut(Yii::$app->user->isGuest ? null : (int) Yii::$app->user->id)) {
                     Yii::$app->session->remove($this->getCheckoutSessionKey());
                     AuditLogService::logAction('check-out', 'Visitor checked out through frontend.');
                     NotificationService::createNotification('Visitor checked out: ' . $selectedVisit->visitor->full_name, 'success');
@@ -189,7 +189,7 @@ class VisitorController extends Controller
         return $this->render('checkout-page', ['model' => $model, 'step' => 'search', 'visit' => $selectedVisit]);
     }
 
-    public function actionCheckoutPage(): string
+    public function actionCheckoutPage(): string|Response
     {
         return $this->actionCheckOut();
     }
@@ -242,7 +242,7 @@ class VisitorController extends Controller
             ->andWhere(['<', 'check_in_time', $tomorrowStart])
             ->one();
 
-        if ($visit !== null && $visit->checkOut()) {
+        if ($visit !== null && $visit->checkOut(Yii::$app->user->isGuest ? null : (int) Yii::$app->user->id)) {
             AuditLogService::logAction('check-out', 'Visitor checked out through today\'s visitor list.');
             NotificationService::createNotification('Visitor checked out: ' . $visit->visitor->full_name, 'success');
             Yii::$app->session->setFlash('success', 'Check-out successful. Thank you, ' . $visit->visitor->full_name . '.');
