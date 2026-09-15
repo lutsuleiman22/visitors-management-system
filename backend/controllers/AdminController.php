@@ -73,6 +73,16 @@ class AdminController extends BaseController
         return $this->render('dashboard', $data);
     }
 
+    public function actionBranches(): string
+    {
+        $this->requireRole(User::ROLE_ADMIN);
+
+        return $this->render('branches', [
+            'branches' => BranchCatalog::all(),
+            'departments' => BranchCatalog::departments(),
+        ]);
+    }
+
     public function actionStats(): Response
     {
         $this->requireRole(User::ROLE_ADMIN);

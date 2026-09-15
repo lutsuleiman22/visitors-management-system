@@ -23,6 +23,7 @@ $todayLabel = date('M j, Y');
             <?= Html::a('Add Account', ['/user/create'], ['class' => 'btn btn-primary']) ?>
             <?= Html::a('Approvals (' . (int) $pendingUsers . ')', ['/user/index', '#' => 'pending-approvals'], ['class' => 'btn btn-warning']) ?>
             <?= Html::a('Manage Users', ['/user/index'], ['class' => 'btn btn-outline-primary']) ?>
+            <?= Html::a('Branches & Departments', ['/admin/branches'], ['class' => 'btn btn-outline-primary']) ?>
             <?= Html::a('Manage Visits', ['/visit/index'], ['class' => 'btn btn-outline-primary']) ?>
         </div>
     </div>

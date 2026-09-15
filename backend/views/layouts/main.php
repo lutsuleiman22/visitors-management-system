@@ -39,6 +39,7 @@ $this->render('_head');
         <nav class="sidebar-nav">
             <?php if ($isAdmin): ?>
                 <a class="sidebar-link" href="<?= Html::encode(Yii::$app->urlManager->createUrl(['/admin/dashboard'])) ?>"><span class="sidebar-icon">D</span><span class="menu-text">Admin Dashboard</span></a>
+                <a class="sidebar-link" href="<?= Html::encode(Yii::$app->urlManager->createUrl(['/admin/branches'])) ?>"><span class="sidebar-icon">B</span><span class="menu-text">Branches & Departments</span></a>
                 <a class="sidebar-link" href="<?= Html::encode(Yii::$app->urlManager->createUrl(['/user/index'])) ?>"><span class="sidebar-icon">U</span><span class="menu-text">User Management</span></a>
                 <a class="sidebar-link" href="<?= Html::encode(Yii::$app->urlManager->createUrl(['/admin/reports'])) ?>"><span class="sidebar-icon">R</span><span class="menu-text">Reports</span></a>
                 <a class="sidebar-link" href="<?= Html::encode(Yii::$app->urlManager->createUrl(['/dashboard/analytics'])) ?>"><span class="sidebar-icon">A</span><span class="menu-text">Analytics</span></a>
