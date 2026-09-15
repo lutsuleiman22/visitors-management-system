@@ -5,7 +5,10 @@ declare(strict_types=1);
 /** @var yii\web\View $this */
 /** @var backend\models\VisitSearch $searchModel */
 /** @var yii\data\ActiveDataProvider $dataProvider */
+/** @var array<string, string> $branches */
+/** @var string $selectedBranch */
 
+use common\services\BranchCatalog;
 use common\models\Visit;
 use yii\grid\ActionColumn;
 use yii\grid\GridView;
@@ -59,6 +62,11 @@ $canCheckOut = in_array($role, ['admin', 'reception'], true);
                 'attribute' => 'host_username',
                 'label' => 'Host',
                 'value' => static fn (Visit $model): string => $model->host->username ?? '—',
+            ],
+            [
+                'attribute' => 'branch_code',
+                'label' => 'PBZ Branch',
+                'value' => static fn (Visit $model): string => BranchCatalog::all()[$model->branch_code] ?? 'Unassigned',
             ],
             'purpose',
             'from_location',

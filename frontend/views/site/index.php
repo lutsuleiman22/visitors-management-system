@@ -3,60 +3,54 @@
 declare(strict_types=1);
 
 /** @var yii\web\View $this */
+/** @var array<string, string> $branches */
+/** @var string $selectedBranch */
 
 use yii\helpers\Html;
 
-$this->title = 'Visitor Management System';
+$this->title = 'PBZ Visitor Management System';
 $this->params['meta_description'] = 'Self-service visitor check-in and check-out portal.';
 ?>
 <div class="site-index">
-    <div class="hero-banner text-white rounded-4 p-5 mb-4 position-relative overflow-hidden">
-        <div class="position-relative">
-            <h1 class="display-5 fw-bold mb-3">Visitor Management</h1>
-            <p class="lead opacity-75 mb-4 hero-lead">
-                Welcome! we're happy to have you here .We look forward to know bitter.
-            </p>
-            <div class="d-flex gap-2 flex-wrap">
-                <?= Html::a('Visitor Check-In', ['/visitor/check-in'], [
-                    'class' => 'btn btn-light btn-lg fw-semibold px-4',
-                ]) ?>
-                <?= Html::a('Visitor Check-Out', ['/visitor/check-out'], [
-                    'class' => 'btn btn-outline-light btn-lg px-4',
-                ]) ?>
-            </div>
-        </div>
+    <div class="hero-banner text-white rounded-4 p-4 p-lg-5 mb-4">
+        <span class="small text-uppercase fw-semibold opacity-75">PBZ front desk portal</span>
+        <h1 class="display-6 fw-bold mt-2 mb-2">Visitor Operations</h1>
+        <p class="lead opacity-75 mb-0">Select your branch, sign in as reception, then manage visitor check-in and check-out.</p>
     </div>
 
-    <div class="row g-3">
-        <div class="col-md-4">
-            <div class="card h-100 border-0 shadow-sm rounded-3">
-                <div class="card-body">
-                    <h2 class="h5 fw-bold">1. Check In</h2>
-                    <p class="text-body-secondary small mb-0">
-                        welome!. please complete the check-in form below to register your visit
-                    </p>
-                </div>
+    <?php if ($selectedBranch === ''): ?>
+        <div class="card border-0 shadow-sm rounded-4"><div class="card-body p-4 p-lg-5">
+            <span class="text-uppercase small fw-semibold text-primary">Step 1</span>
+            <h2 class="h3 mt-2">Select PBZ branch</h2>
+            <p class="text-body-secondary">Choose the branch where this reception desk is operating.</p>
+            <?= Html::beginForm(['/site/index'], 'post') ?>
+                <div class="row g-3 align-items-end"><div class="col-md-8">
+                    <label class="form-label fw-semibold" for="pbz-branch">Branch</label>
+                    <?= Html::dropDownList('branch', '', $branches, ['id' => 'pbz-branch', 'class' => 'form-select form-select-lg', 'prompt' => 'Choose a PBZ branch']) ?>
+                </div><div class="col-md-4 d-grid">
+                    <?= Html::submitButton('Continue', ['class' => 'btn btn-primary btn-lg']) ?>
+                </div></div>
+            <?= Html::endForm() ?>
+        </div></div>
+    <?php elseif (Yii::$app->user->isGuest): ?>
+        <div class="card border-0 shadow-sm rounded-4"><div class="card-body p-4 p-lg-5">
+            <span class="text-uppercase small fw-semibold text-primary">Step 2</span>
+            <h2 class="h3 mt-2"><?= Html::encode($branches[$selectedBranch]) ?></h2>
+            <p class="text-body-secondary">Reception must sign in or create a reception account before visitor operations are available.</p>
+            <div class="d-flex gap-2 flex-wrap">
+                <?= Html::a('Reception Sign In', ['/site/login'], ['class' => 'btn btn-primary btn-lg']) ?>
+                <?= Html::a('Create Reception Account', ['/site/reception-signup'], ['class' => 'btn btn-outline-primary btn-lg']) ?>
             </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card h-100 border-0 shadow-sm rounded-3">
-                <div class="card-body">
-                    <h2 class="h5 fw-bold">2. Get Your Pass</h2>
-                    <p class="text-body-secondary small mb-0">
-                        your pass confirms your visit and provides quick acess to your information 
-                    </p>
-                </div>
+        </div></div>
+    <?php else: ?>
+        <div class="card border-0 shadow-sm rounded-4"><div class="card-body p-4 p-lg-5">
+            <span class="text-uppercase small fw-semibold text-success">Ready</span>
+            <h2 class="h3 mt-2"><?= Html::encode($branches[$selectedBranch]) ?></h2>
+            <p class="text-body-secondary">Reception: <strong><?= Html::encode(Yii::$app->user->identity->username) ?></strong></p>
+            <div class="d-flex gap-2 flex-wrap">
+                <?= Html::a('Check-In Visitor', ['/visitor/check-in'], ['class' => 'btn btn-success btn-lg']) ?>
+                <?= Html::a('Check-Out Visitor', ['/visitor/checkout-page'], ['class' => 'btn btn-primary btn-lg']) ?>
             </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card h-100 border-0 shadow-sm rounded-3">
-                <div class="card-body">
-                    <h2 class="h5 fw-bold">3. Check Out</h2>
-                    <p class="text-body-secondary small mb-0">
-                        finish your check out by confirming your check-out 
-                    </p>
-                </div>
-            </div>
-        </div>
-    </div>
+        </div></div>
+    <?php endif; ?>
 </div>

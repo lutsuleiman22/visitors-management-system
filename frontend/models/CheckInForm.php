@@ -159,6 +159,7 @@ class CheckInForm extends Model
             $visit = new Visit();
             $visit->visitor_id = (int) $visitor->id;
             $visit->host_user_id = $this->host_user_id ?: null;
+                        $visit->branch_code = (string) Yii::$app->session->get('pbz_branch', '');
             $visit->purpose = $this->purpose;
             $visit->from_location = $this->origin;
             $visit->destination = $this->destination;

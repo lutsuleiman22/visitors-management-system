@@ -10,6 +10,7 @@ use common\models\Notification;
 use common\models\User;
 use common\models\Visit;
 use common\models\Visitor;
+use common\services\BranchCatalog;
 use Yii;
 use yii\helpers\Html;
 use yii\web\Response;
@@ -21,16 +22,36 @@ class AdminController extends BaseController
     {
         $this->requireRole(User::ROLE_ADMIN);
 
+        $branches = BranchCatalog::all();
+        $selectedBranch = trim((string) Yii::$app->request->get('branch', ''));
+        if ($selectedBranch !== '' && !array_key_exists($selectedBranch, $branches)) {
+            $selectedBranch = '';
+        }
+
         try {
+            $visitQuery = Visit::find();
+            $activeQuery = Visit::find()->where(['status' => Visit::STATUS_CHECKED_IN, 'check_out_time' => null]);
+            $checkedOutQuery = Visit::find()->where(['not', ['check_out_time' => null]]);
+            $todayQuery = Visit::find()->where(['>=', 'check_in_time', date('Y-m-d 00:00:00')]);
+            $pendingQuery = Visit::find()->where(['not in', 'status', [Visit::STATUS_CHECKED_IN, Visit::STATUS_CHECKED_OUT]]);
+            $userQuery = User::find();
+            $visitorQuery = Visit::find()->alias('v')->select('v.visitor_id')->distinct();
+            foreach ([$visitQuery, $activeQuery, $checkedOutQuery, $todayQuery, $pendingQuery, $userQuery, $visitorQuery] as $query) {
+                if ($selectedBranch !== '') {
+                    $query->andWhere(['branch_code' => $selectedBranch]);
+                }
+            }
             $data = [
-                'totalUsers' => (int) User::find()->count(),
-                'totalVisitors' => (int) Visitor::find()->count(),
-                'totalVisits' => (int) Visit::find()->count(),
-                'activeVisits' => (int) Visit::find()->where(['status' => Visit::STATUS_CHECKED_IN, 'check_out_time' => null])->count(),
-                'checkedOutVisits' => (int) Visit::find()->where(['not', ['check_out_time' => null]])->count(),
-                'pendingVisits' => (int) Visit::find()->where(['not in', 'status', [Visit::STATUS_CHECKED_IN, Visit::STATUS_CHECKED_OUT]])->count(),
-                'todayVisits' => (int) Visit::find()->where(['>=', 'check_in_time', date('Y-m-d 00:00:00')])->count(),
-                'recentVisitors' => Visit::find()->with(['visitor', 'host'])->orderBy(['created_at' => SORT_DESC])->limit(10)->all(),
+                'totalUsers' => (int) $userQuery->count(),
+                'totalVisitors' => (int) $visitorQuery->count(),
+                'totalVisits' => (int) $visitQuery->count(),
+                'activeVisits' => (int) $activeQuery->count(),
+                'checkedOutVisits' => (int) $checkedOutQuery->count(),
+                'pendingVisits' => (int) $pendingQuery->count(),
+                'todayVisits' => (int) $todayQuery->count(),
+                'recentVisitors' => $visitQuery->with(['visitor', 'host'])->orderBy(['created_at' => SORT_DESC])->limit(10)->all(),
+                'branches' => $branches,
+                'selectedBranch' => $selectedBranch,
             ];
         } catch (\Throwable $exception) {
             Yii::error($exception->getMessage(), __METHOD__);
@@ -43,6 +64,8 @@ class AdminController extends BaseController
                 'pendingVisits' => 0,
                 'todayVisits' => 0,
                 'recentVisitors' => [],
+                'branches' => $branches,
+                'selectedBranch' => $selectedBranch,
             ];
         }
         return $this->render('dashboard', $data);

@@ -11,6 +11,7 @@ use common\models\User;
 use common\models\Visit;
 use common\models\Visitor;
 use common\services\AuditLogService;
+use common\services\BranchCatalog;
 use common\services\NotificationService;
 use Yii;
 use yii\data\ArrayDataProvider;
@@ -42,10 +43,18 @@ class VisitController extends BaseController
     public function actionIndex(): string|Response
     {
         $this->requireRole(User::ROLE_ADMIN, User::ROLE_RECEPTION);
+        $branches = BranchCatalog::all();
+        $selectedBranch = trim((string) Yii::$app->request->get('branch', ''));
+        if ($selectedBranch !== '' && !array_key_exists($selectedBranch, $branches)) {
+            $selectedBranch = '';
+        }
 
         $searchModel = new VisitSearch();
         try {
             $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
+            if ($selectedBranch !== '') {
+                $dataProvider->query->andWhere(['branch_code' => $selectedBranch]);
+            }
         } catch (\Throwable $exception) {
             Yii::error($exception->getMessage(), __METHOD__);
             $dataProvider = new ArrayDataProvider(['allModels' => []]);
@@ -55,6 +64,8 @@ class VisitController extends BaseController
         return $this->render('index', [
             'searchModel' => $searchModel,
             'dataProvider' => $dataProvider,
+            'branches' => $branches,
+            'selectedBranch' => $selectedBranch,
         ]);
     }
 
@@ -136,6 +147,7 @@ class VisitController extends BaseController
             'model' => $model,
             'visitors' => $this->visitorList(),
             'hosts' => $this->hostList(),
+            'branches' => BranchCatalog::all(),
         ]);
     }
 
@@ -166,6 +178,7 @@ class VisitController extends BaseController
             'model' => $model,
             'visitors' => $this->visitorList(),
             'hosts' => $this->hostList(),
+            'branches' => BranchCatalog::all(),
         ]);
     }
 

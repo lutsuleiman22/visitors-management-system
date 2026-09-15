@@ -64,7 +64,7 @@ class SiteController extends BaseController
     }
 
     /**
-     * Admin / receptionist dashboard with live visit stats.
+    * Admin dashboard entry point.
      *
      * @return string
      */
@@ -73,12 +73,6 @@ class SiteController extends BaseController
         $role = (string) Yii::$app->user->identity->role;
         if ($role === User::ROLE_ADMIN) {
             return $this->redirect(['/admin/dashboard']);
-        }
-        if ($role === User::ROLE_RECEPTION) {
-            return $this->redirect(['/reception/dashboard']);
-        }
-        if ($role === User::ROLE_SECURITY) {
-            return $this->redirect(['/security/dashboard']);
         }
 
         throw new ForbiddenHttpException('You are not authorized to access the backend dashboard.');
@@ -99,16 +93,17 @@ class SiteController extends BaseController
 
         $model = new LoginForm();
         if ($model->load(Yii::$app->request->post()) && $model->login()) {
+            if (!Yii::$app->user->identity instanceof User || !Yii::$app->user->identity->isAdmin()) {
+                Yii::$app->user->logout();
+                $model->addError('username', 'Only administrator accounts can access the backend.');
+                $model->password = '';
+                return $this->render('login', ['model' => $model]);
+            }
+
             AuditLogService::logAction('login', 'User logged in successfully.');
             AuditLogger::log('LOGIN', 'User', Yii::$app->user->id, 'User logged in');
             NotificationService::createNotification('New login: ' . Yii::$app->user->identity->username, 'info', (int) Yii::$app->user->id);
-            $role = (string) Yii::$app->user->identity->role;
-            return match ($role) {
-                User::ROLE_ADMIN => $this->redirect(['/admin/dashboard']),
-                User::ROLE_RECEPTION => $this->redirect(['/reception/dashboard']),
-                User::ROLE_SECURITY => $this->redirect(['/security/dashboard']),
-                default => $this->redirect(['/site/index']),
-            };
+            return $this->redirect(['/admin/dashboard']);
         }
 
         $model->password = '';

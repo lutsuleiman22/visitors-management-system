@@ -15,6 +15,7 @@ use yii\db\ActiveRecord;
  * @property int $id
  * @property int $visitor_id
  * @property int|null $host_user_id
+ * @property string|null $branch_code
  * @property string|null $purpose
  * @property string|null $from_location
  * @property string|null $destination
@@ -52,7 +53,7 @@ class Visit extends ActiveRecord
         return [
             [['visitor_id'], 'required'],
             [['visitor_id', 'host_user_id', 'created_at', 'updated_at'], 'integer'],
-            [['purpose', 'from_location', 'destination', 'qr_code_hash', 'status', 'signature_path'], 'string', 'max' => 255],
+            [['branch_code', 'purpose', 'from_location', 'destination', 'qr_code_hash', 'status', 'signature_path'], 'string', 'max' => 255],
             [['visitor_pass_number'], 'string', 'max' => 32],
             [['visitor_pass_number'], 'unique'],
             [['check_in_time', 'check_out_time'], 'safe'],
@@ -83,6 +84,7 @@ class Visit extends ActiveRecord
             'id' => 'ID',
             'visitor_id' => 'Visitor',
             'host_user_id' => 'Host',
+                        'branch_code' => 'PBZ Branch',
             'purpose' => 'Purpose of Visit',
             'from_location' => 'Coming From',
             'destination' => 'Destination',

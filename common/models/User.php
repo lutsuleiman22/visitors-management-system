@@ -22,6 +22,7 @@ use yii\web\IdentityInterface;
  * @property string $email
  * @property string $auth_key
  * @property string $role
+ * @property string|null $branch_code
  * @property int $status
  * @property int $created_at
  * @property int $updated_at
@@ -66,7 +67,7 @@ class User extends ActiveRecord implements IdentityInterface
             ['status', 'in', 'range' => [self::STATUS_ACTIVE, self::STATUS_INACTIVE, self::STATUS_DELETED]],
             [['username', 'email'], 'required'],
             [['username', 'email'], 'string', 'max' => 255],
-            ['role', 'string', 'max' => 20],
+            [['role', 'branch_code'], 'string', 'max' => 64],
             ['role', 'default', 'value' => self::ROLE_USER],
             ['role', 'in', 'range' => [
                 self::ROLE_ADMIN,

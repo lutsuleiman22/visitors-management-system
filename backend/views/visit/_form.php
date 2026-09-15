@@ -6,6 +6,7 @@ declare(strict_types=1);
 /** @var common\models\Visit $model */
 /** @var array<int, string> $visitors */
 /** @var array<int, string> $hosts */
+/** @var array<string, string> $branches */
 
 use common\models\Visit;
 use yii\bootstrap5\ActiveForm;
@@ -21,6 +22,9 @@ use yii\helpers\Html;
         </div>
         <div class="col-md-6">
             <?= $form->field($model, 'host_user_id')->dropDownList($hosts, ['prompt' => 'Select host…']) ?>
+        </div>
+        <div class="col-md-6">
+            <?= $form->field($model, 'branch_code')->dropDownList($branches, ['prompt' => 'Select PBZ branch']) ?>
         </div>
         <div class="col-md-8">
             <?= $form->field($model, 'purpose')->textInput(['maxlength' => true]) ?>

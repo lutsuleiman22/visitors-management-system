@@ -6,6 +6,7 @@ declare(strict_types=1);
 /** @var common\models\Visit $model */
 /** @var array<int, string> $visitors */
 /** @var array<int, string> $hosts */
+/** @var array<string, string> $branches */
 
 use yii\helpers\Html;
 
@@ -19,5 +20,6 @@ $this->params['breadcrumbs'][] = $this->title;
         'model' => $model,
         'visitors' => $visitors,
         'hosts' => $hosts,
+        'branches' => $branches,
     ]) ?>
 </div>

@@ -9,6 +9,9 @@ use yii\bootstrap5\NavBar;
 use yii\helpers\Html;
 
 $backendBaseUrl = str_replace('/frontend/web', '/backend/web', rtrim(Yii::$app->request->baseUrl, '/'));
+$deskReady = !Yii::$app->user->isGuest
+    && Yii::$app->user->identity?->isReception() === true
+    && (string) Yii::$app->session->get('pbz_branch', '') !== '';
 
 $items = [
     [
@@ -18,10 +21,12 @@ $items = [
     [
         'label' => 'Check-In',
         'url' => ['/visitor/check-in'],
+        'visible' => $deskReady,
     ],
     [
         'label' => 'Check-Out',
         'url' => ['/visitor/checkout-page'],
+        'visible' => $deskReady,
     ],
     [
         'label' => 'About',

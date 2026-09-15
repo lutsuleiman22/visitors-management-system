@@ -5,7 +5,10 @@ declare(strict_types=1);
 namespace frontend\controllers;
 
 use common\models\LoginForm;
+use common\models\User;
 use frontend\models\ContactForm;
+use frontend\models\ReceptionSignupForm;
+use common\services\BranchCatalog;
 use frontend\models\PasswordResetRequestForm;
 use frontend\models\ResendVerificationEmailForm;
 use frontend\models\ResetPasswordForm;
@@ -90,7 +93,21 @@ class SiteController extends Controller
      */
     public function actionIndex(): string
     {
-        return $this->render('index');
+        $branches = BranchCatalog::all();
+        $selectedBranch = (string) Yii::$app->session->get('pbz_branch', '');
+
+        if (Yii::$app->request->isPost) {
+            $selectedBranch = trim((string) Yii::$app->request->post('branch', ''));
+            if (!array_key_exists($selectedBranch, $branches)) {
+                Yii::$app->session->setFlash('error', 'Please select a valid PBZ branch.');
+                $selectedBranch = '';
+            } else {
+                Yii::$app->session->set('pbz_branch', $selectedBranch);
+                Yii::$app->session->setFlash('success', 'Branch selected: ' . $branches[$selectedBranch]);
+            }
+        }
+
+        return $this->render('index', ['branches' => $branches, 'selectedBranch' => $selectedBranch]);
     }
 
     /**
@@ -107,7 +124,12 @@ class SiteController extends Controller
         $model = new LoginForm();
 
         if ($model->load(Yii::$app->request->post()) && $model->login()) {
-            return $this->goBack();
+            if (!Yii::$app->user->identity instanceof User || !Yii::$app->user->identity->isReception()) {
+                Yii::$app->user->logout();
+                $model->addError('username', 'Only reception accounts can access the frontend desk.');
+            } else {
+                return $this->redirect(['/site/index']);
+            }
         }
 
         $model->password = '';
@@ -117,6 +139,22 @@ class SiteController extends Controller
         ]);
     }
 
+    public function actionReceptionSignup(): string|Response
+    {
+        $model = new ReceptionSignupForm();
+
+        if ($model->load(Yii::$app->request->post())) {
+            $user = $model->createReception();
+            if ($user !== null) {
+                Yii::$app->user->login($user, 3600 * 24 * 30);
+                Yii::$app->session->setFlash('success', 'Reception account created successfully.');
+                return $this->redirect(['/site/index']);
+            }
+        }
+
+        return $this->render('reception-signup', ['model' => $model]);
+    }
+
     /**
      * Logs out the current user.
      *
@@ -124,7 +162,12 @@ class SiteController extends Controller
      */
     public function actionLogout(): Response
     {
+        $selectedBranch = (string) Yii::$app->session->get('pbz_branch', '');
         Yii::$app->user->logout();
+        if ($selectedBranch !== '' && array_key_exists($selectedBranch, BranchCatalog::all())) {
+            Yii::$app->session->set('pbz_branch', $selectedBranch);
+        }
+        Yii::$app->session->setFlash('success', 'You have been signed out. Sign in again to continue at your selected branch.');
 
         return $this->goHome();
     }

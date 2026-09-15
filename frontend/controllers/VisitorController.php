@@ -11,6 +11,7 @@ use common\services\NotificationService;
 use frontend\models\CheckInForm;
 use frontend\models\CheckOutForm;
 use Yii;
+use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
@@ -34,6 +35,20 @@ class VisitorController extends Controller
     public function behaviors(): array
     {
         return [
+            'access' => [
+                'class' => AccessControl::class,
+                'only' => ['check-in', 'check-out', 'checkout-page', 'search-active-visitors'],
+                'rules' => [[
+                    'allow' => true,
+                    'roles' => ['@'],
+                    'matchCallback' => static fn (): bool => Yii::$app->user->identity?->isReception() === true
+                        && (string) Yii::$app->session->get('pbz_branch', '') !== '',
+                ]],
+                'denyCallback' => static function (): Response {
+                    Yii::$app->session->setFlash('error', 'Select a PBZ branch and sign in with a reception account first.');
+                    return Yii::$app->response->redirect(['/site/index']);
+                },
+            ],
             'verbs' => [
                 'class' => VerbFilter::class,
                 'actions' => [
@@ -123,9 +138,16 @@ class VisitorController extends Controller
 
         if ($request->isPost) {
             $model->load($request->post());
+
             if ($step === 'preview') {
+                $searchTerm = trim((string) $request->post('search', ''));
                 $visitId = (int) $request->post('visit_id', 0);
-                $selectedVisit = $this->findActiveVisitById($visitId);
+
+                if ($visitId > 0) {
+                    $selectedVisit = $this->findActiveVisitById($visitId);
+                } elseif ($searchTerm !== '') {
+                    $selectedVisit = $this->findExactActiveVisitByName($searchTerm);
+                }
 
                 if ($selectedVisit === null) {
                     Yii::$app->session->setFlash('error', 'Type the exact checked-in visitor name to continue.');
@@ -241,6 +263,29 @@ class VisitorController extends Controller
             ->with(['visitor', 'host'])
             ->where(['id' => $visitId, 'status' => Visit::STATUS_CHECKED_IN, 'check_out_time' => null])
             ->one();
+    }
+
+    private function findExactActiveVisitByName(string $name): ?Visit
+    {
+        $normalizedInput = preg_replace('/\s+/', ' ', trim($name));
+        if ($normalizedInput === '') {
+            return null;
+        }
+
+        $visits = Visit::find()
+            ->with(['visitor', 'host'])
+            ->where(['status' => Visit::STATUS_CHECKED_IN, 'check_out_time' => null])
+            ->orderBy(['check_in_time' => SORT_DESC])
+            ->all();
+
+        foreach ($visits as $visit) {
+            $fullName = preg_replace('/\s+/', ' ', trim((string) ($visit->visitor?->full_name ?? '')));
+            if ($fullName !== '' && mb_strtolower($fullName) === mb_strtolower($normalizedInput)) {
+                return $visit;
+            }
+        }
+
+        return null;
     }
 
     /**

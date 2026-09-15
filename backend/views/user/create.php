@@ -11,7 +11,7 @@ $this->params['breadcrumbs'][] = $this->title;
 ?>
 <h1 class="h3 mb-3"><?= Html::encode($this->title) ?></h1>
 <?php $form = ActiveForm::begin(); ?>
-<?= $this->render('_form', ['form' => $form, 'model' => $model]) ?>
+<?= $this->render('_form', ['form' => $form, 'model' => $model, 'branches' => $branches]) ?>
 <?= Html::submitButton('Create User', ['class' => 'btn btn-success']) ?>
 <?= Html::a('Cancel', ['index'], ['class' => 'btn btn-outline-secondary']) ?>
 <?php ActiveForm::end(); ?>

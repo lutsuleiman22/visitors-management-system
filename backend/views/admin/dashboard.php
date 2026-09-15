@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 use yii\helpers\Html;
 
+/** @var array<string, string> $branches */
+/** @var string $selectedBranch */
+
 $this->title = 'Admin Dashboard';
 $this->params['breadcrumbs'][] = $this->title;
 $todayLabel = date('M j, Y');
@@ -21,6 +24,13 @@ $todayLabel = date('M j, Y');
             <?= Html::a('Manage Visits', ['/visit/index'], ['class' => 'btn btn-outline-primary']) ?>
         </div>
     </div>
+    <div class="dashboard-branch-bar">
+        <div><span class="dashboard-eyebrow">Branch workspace</span><strong><?= $selectedBranch !== '' ? Html::encode($branches[$selectedBranch]) : 'All PBZ branches' ?></strong></div>
+        <?= Html::beginForm(['/admin/dashboard'], 'get', ['class' => 'dashboard-branch-form']) ?>
+            <?= Html::dropDownList('branch', $selectedBranch, $branches, ['class' => 'form-select', 'prompt' => 'All PBZ branches', 'aria-label' => 'Select PBZ branch']) ?>
+            <?= Html::submitButton('View Branch', ['class' => 'btn btn-primary']) ?>
+        <?= Html::endForm() ?>
+    </div>
     <div class="dashboard-stats">
         <?php foreach ([
             ['Total Visitors', $totalVisitors, 'blue', 'V', '+' . (int) $todayVisits . ' today'],
@@ -34,6 +44,11 @@ $todayLabel = date('M j, Y');
                 <div class="dashboard-stat-value"><?= (int) $value ?></div>
             </article>
         <?php endforeach; ?>
+    </div>
+    <div class="dashboard-branch-summary">
+        <div><span>Users in branch</span><strong><?= (int) $totalUsers ?></strong><?= Html::a('View users', ['/user/index', 'branch' => $selectedBranch], ['class' => 'small']) ?></div>
+        <div><span>Visitors in branch</span><strong><?= (int) $totalVisitors ?></strong><?= Html::a('View visits', ['/visit/index', 'branch' => $selectedBranch], ['class' => 'small']) ?></div>
+        <div><span>Visits recorded</span><strong><?= (int) $totalVisits ?></strong></div>
     </div>
     <div class="dashboard-grid">
         <section class="dashboard-panel dashboard-panel--activity">
@@ -63,6 +78,7 @@ $todayLabel = date('M j, Y');
 </div>
 <?php $this->registerCss(<<<'CSS'
 .admin-dashboard { --dashboard-ink: #198672; --dashboard-muted: #41669e; --dashboard-border: #1d9e6a; --dashboard-blue: #0d6efd; --dashboard-green: #391683; --dashboard-red: #d9534f; --dashboard-yellow: #afaf20; color: var(--dashboard-ink); }
+.dashboard-branch-bar { align-items: end; background: #fff; border: 1px solid #dfe7ee; display: flex; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; padding: 1rem 1.15rem; }.dashboard-branch-bar strong { color: #10233e; display: block; margin-top: .25rem; }.dashboard-branch-form { align-items: center; display: flex; gap: .5rem; min-width: min(100%, 390px); }.dashboard-branch-form .form-select { min-width: 240px; }.dashboard-branch-summary { background: #fff; border: 1px solid var(--dashboard-border); display: grid; gap: 1rem; grid-template-columns: repeat(3, 1fr); margin-bottom: 1rem; padding: 1rem 1.15rem; }.dashboard-branch-summary div { display: grid; gap: .2rem; }.dashboard-branch-summary span { color: var(--dashboard-muted); font-size: .75rem; text-transform: uppercase; }.dashboard-branch-summary strong { color: #10233e; font-size: 1.5rem; }.dashboard-branch-summary a { color: var(--dashboard-blue); text-decoration: none; }
 .dashboard-heading { align-items: flex-end; display: flex; justify-content: space-between; gap: 1rem; margin-bottom: 1.5rem; }
 .dashboard-eyebrow { color: var(--dashboard-muted); display: block; font-size: .68rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
 .dashboard-heading h1 { font-size: clamp(1.65rem, 3vw, 2.35rem); font-weight: 800; margin: .25rem 0 .35rem; }
@@ -80,5 +96,5 @@ $todayLabel = date('M j, Y');
 .live-activity { max-height: 390px; overflow-y: auto; padding: 0 1.25rem 1rem; }.activity-row { align-items: center; border-top: 1px solid #41c6a5; display: flex; gap: .75rem; padding: .8rem 0; }.activity-avatar { align-items: center; background: #63b91d; color: var(--dashboard-ink); display: flex; flex: 0 0 2.15rem; font-size: .75rem; font-weight: 800; height: 2.15rem; justify-content: center; }.activity-details { display: grid; min-width: 0; }.activity-details strong { font-size: .86rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }.activity-details span { color: var(--dashboard-muted); font-size: .75rem; margin-top: .15rem; }.activity-meta { align-items: flex-end; display: grid; gap: .25rem; margin-left: auto; text-align: right; }.activity-meta small { color: var(--dashboard-muted); font-size: .7rem; }.activity-badge { font-size: .65rem; font-weight: 900; padding: .25rem .4rem; }.activity-badge--in { background: #e5f5ed; color: var(--dashboard-green); }.activity-badge--out { background: #edf0f2; color: #66717a; }.activity-empty { color: var(--dashboard-muted); padding: 2rem 0; text-align: center; }
 .dashboard-panel--snapshot { padding-bottom: 1.25rem; }.snapshot-value { font-size: 4rem; font-weight: 800; line-height: 1; padding: .9rem 1.25rem 0; }.dashboard-panel--snapshot > p { color: var(--dashboard-muted); font-size: .82rem; margin: .45rem 1.25rem 1.25rem; }.snapshot-bar { background: #eef1f3; height: .45rem; margin: 0 1.25rem 1.25rem; }.snapshot-bar span { background: var(--dashboard-yellow); display: block; height: 100%; }.snapshot-footer { border-top: 1px solid #f0f2f4; display: flex; justify-content: space-between; margin: 0 1.25rem; padding: .75rem 0; }.snapshot-footer span { color: var(--dashboard-muted); font-size: .78rem; }.snapshot-footer strong { font-size: .85rem; }
 @media (max-width: 991.98px) { .dashboard-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }.dashboard-grid { grid-template-columns: 1fr; } }
-@media (max-width: 575.98px) { .dashboard-heading { align-items: flex-start; flex-direction: column; }.dashboard-actions { justify-content: flex-start; }.dashboard-stats { grid-template-columns: 1fr; } }
+@media (max-width: 575.98px) { .dashboard-heading { align-items: flex-start; flex-direction: column; }.dashboard-actions { justify-content: flex-start; }.dashboard-stats, .dashboard-branch-summary { grid-template-columns: 1fr; }.dashboard-branch-bar { align-items: stretch; flex-direction: column; }.dashboard-branch-form { flex-direction: column; }.dashboard-branch-form .form-select, .dashboard-branch-form .btn { width: 100%; } }
 CSS); $this->registerJs("window.setInterval(function () { window.location.reload(); }, 10000);"); ?>

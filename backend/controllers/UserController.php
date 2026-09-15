@@ -7,6 +7,7 @@ namespace backend\controllers;
 use backend\components\BaseController;
 use common\models\User;
 use common\services\AuditLogService;
+use common\services\BranchCatalog;
 use Yii;
 use yii\data\ArrayDataProvider;
 use yii\data\ActiveDataProvider;
@@ -26,15 +27,23 @@ class UserController extends BaseController
     public function actionIndex(): string
     {
         $this->requireRole(User::ROLE_ADMIN);
+        $branches = BranchCatalog::all();
+        $selectedBranch = trim((string) Yii::$app->request->get('branch', ''));
         try {
-            $dataProvider = new ActiveDataProvider(['query' => User::find()->orderBy(['username' => SORT_ASC])]);
+            $query = User::find()->orderBy(['username' => SORT_ASC]);
+            if ($selectedBranch !== '' && array_key_exists($selectedBranch, $branches)) {
+                $query->andWhere(['branch_code' => $selectedBranch]);
+            } else {
+                $selectedBranch = '';
+            }
+            $dataProvider = new ActiveDataProvider(['query' => $query]);
             $dataProvider->getTotalCount();
         } catch (\Throwable $exception) {
             Yii::error($exception->getMessage(), __METHOD__);
             $dataProvider = new ArrayDataProvider(['allModels' => []]);
             Yii::$app->session->setFlash('error', 'User data is temporarily unavailable.');
         }
-        return $this->render('index', ['dataProvider' => $dataProvider]);
+        return $this->render('index', ['dataProvider' => $dataProvider, 'branches' => $branches, 'selectedBranch' => $selectedBranch]);
     }
 
     public function actionCreate(): string|Response
@@ -55,7 +64,7 @@ class UserController extends BaseController
             Yii::error($exception->getMessage(), __METHOD__);
             Yii::$app->session->setFlash('error', 'Unable to create user at this time.');
         }
-        return $this->render('create', ['model' => $model]);
+        return $this->render('create', ['model' => $model, 'branches' => BranchCatalog::all()]);
     }
 
     public function actionUpdate(int $id): string|Response
@@ -78,7 +87,7 @@ class UserController extends BaseController
             Yii::error($exception->getMessage(), __METHOD__);
             Yii::$app->session->setFlash('error', 'Unable to update user at this time.');
         }
-        return $this->render('update', ['model' => $model]);
+        return $this->render('update', ['model' => $model, 'branches' => BranchCatalog::all()]);
     }
 
     public function actionDelete(int $id): Response

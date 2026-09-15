@@ -20,6 +20,7 @@ abstract class BaseController extends Controller
                     [
                         'allow' => true,
                         'roles' => ['@'],
+                        'matchCallback' => static fn (): bool => Yii::$app->user->identity?->isAdmin() === true,
                     ],
                 ],
             ],
