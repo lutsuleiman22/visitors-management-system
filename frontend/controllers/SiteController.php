@@ -65,6 +65,7 @@ class SiteController extends Controller
                 'class' => VerbFilter::class,
                 'actions' => [
                     'logout' => ['post'],
+                    'change-branch' => ['post'],
                 ],
             ],
         ];
@@ -123,12 +124,20 @@ class SiteController extends Controller
 
         $model = new LoginForm();
 
-        if ($model->load(Yii::$app->request->post()) && $model->login()) {
-            if (!Yii::$app->user->identity instanceof User || !Yii::$app->user->identity->isReception()) {
-                Yii::$app->user->logout();
-                $model->addError('username', 'Only reception accounts can access the frontend desk.');
-            } else {
-                return $this->redirect(['/site/index']);
+        if ($model->load(Yii::$app->request->post())) {
+            $pendingUser = User::find()->where(['username' => $model->username])->one();
+            if ($pendingUser !== null && $pendingUser->role === User::ROLE_RECEPTION && $pendingUser->status === User::STATUS_INACTIVE) {
+                $model->addError('username', 'Your reception account is waiting for Admin approval.');
+            } elseif ($model->login()) {
+                if (!Yii::$app->user->identity instanceof User || !Yii::$app->user->identity->isReception()) {
+                    Yii::$app->user->logout();
+                    $model->addError('username', 'Only reception accounts can access the frontend desk.');
+                } elseif (Yii::$app->user->identity->branch_code !== (string) Yii::$app->session->get('pbz_branch', '')) {
+                    Yii::$app->user->logout();
+                    $model->addError('username', 'This account belongs to another PBZ branch. Use Change Branch first.');
+                } else {
+                    return $this->redirect(['/site/reception-dashboard']);
+                }
             }
         }
 
@@ -146,13 +155,33 @@ class SiteController extends Controller
         if ($model->load(Yii::$app->request->post())) {
             $user = $model->createReception();
             if ($user !== null) {
-                Yii::$app->user->login($user, 3600 * 24 * 30);
-                Yii::$app->session->setFlash('success', 'Reception account created successfully.');
-                return $this->redirect(['/site/index']);
+                Yii::$app->session->setFlash('success', 'Account created. Please wait for Admin approval before signing in.');
+                return $this->redirect(['/site/login']);
             }
         }
 
         return $this->render('reception-signup', ['model' => $model]);
+    }
+
+    public function actionReceptionDashboard(): string|Response
+    {
+        $identity = Yii::$app->user->identity;
+        $branch = (string) Yii::$app->session->get('pbz_branch', '');
+        if (!$identity instanceof User || !$identity->isReception() || $branch === '') {
+            Yii::$app->session->setFlash('error', 'Please sign in with an approved reception account first.');
+            return $this->redirect(['/site/index']);
+        }
+
+        $visits = \common\models\Visit::find()
+            ->with(['visitor', 'host'])
+            ->where(['branch_code' => $branch])
+            ->orderBy(['check_in_time' => SORT_DESC])
+            ->all();
+
+        return $this->render('reception-dashboard', [
+            'branchName' => BranchCatalog::all()[$branch] ?? $branch,
+            'visits' => $visits,
+        ]);
     }
 
     /**
@@ -170,6 +199,17 @@ class SiteController extends Controller
         Yii::$app->session->setFlash('success', 'You have been signed out. Sign in again to continue at your selected branch.');
 
         return $this->goHome();
+    }
+
+    public function actionChangeBranch(): Response
+    {
+        Yii::$app->user->logout();
+        Yii::$app->session->remove('pbz_branch');
+        Yii::$app->session->remove('visitor_checkin_data');
+        Yii::$app->session->remove('visitor_checkout_data');
+        Yii::$app->session->setFlash('success', 'Choose the new PBZ branch to continue.');
+
+        return $this->redirect(['/site/index']);
     }
 
     /**

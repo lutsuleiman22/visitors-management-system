@@ -20,7 +20,7 @@ class UserController extends BaseController
     public function behaviors(): array
     {
         return array_merge(parent::behaviors(), [
-            'verbs' => ['class' => VerbFilter::class, 'actions' => ['delete' => ['POST']]],
+            'verbs' => ['class' => VerbFilter::class, 'actions' => ['delete' => ['POST'], 'approve' => ['POST']]],
         ]);
     }
 
@@ -38,12 +38,38 @@ class UserController extends BaseController
             }
             $dataProvider = new ActiveDataProvider(['query' => $query]);
             $dataProvider->getTotalCount();
+            $pendingUsers = User::find()
+                ->where(['role' => User::ROLE_RECEPTION, 'status' => User::STATUS_INACTIVE])
+                ->andFilterWhere($selectedBranch === '' ? [] : ['branch_code' => $selectedBranch])
+                ->orderBy(['created_at' => SORT_ASC])
+                ->all();
         } catch (\Throwable $exception) {
             Yii::error($exception->getMessage(), __METHOD__);
             $dataProvider = new ArrayDataProvider(['allModels' => []]);
+            $pendingUsers = [];
             Yii::$app->session->setFlash('error', 'User data is temporarily unavailable.');
         }
-        return $this->render('index', ['dataProvider' => $dataProvider, 'branches' => $branches, 'selectedBranch' => $selectedBranch]);
+        return $this->render('index', ['dataProvider' => $dataProvider, 'pendingUsers' => $pendingUsers, 'branches' => $branches, 'selectedBranch' => $selectedBranch]);
+    }
+
+    public function actionApprove(int $id): Response
+    {
+        $this->requireRole(User::ROLE_ADMIN);
+        $user = $this->findModel($id);
+
+        if ($user->role !== User::ROLE_RECEPTION || $user->status !== User::STATUS_INACTIVE) {
+            Yii::$app->session->setFlash('warning', 'Only pending reception accounts can be approved.');
+            return $this->redirect(['index']);
+        }
+
+        if ($user->updateAttributes(['status' => User::STATUS_ACTIVE])) {
+            AuditLogService::logAction('approve-user', 'Reception account #' . $user->id . ' approved.');
+            Yii::$app->session->setFlash('success', 'Reception account approved successfully.');
+        } else {
+            Yii::$app->session->setFlash('error', 'Unable to approve this reception account.');
+        }
+
+        return $this->redirect(['index', 'branch' => $user->branch_code]);
     }
 
     public function actionCreate(): string|Response

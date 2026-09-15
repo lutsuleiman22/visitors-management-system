@@ -40,6 +40,9 @@ $this->params['meta_description'] = 'Self-service visitor check-in and check-out
             <div class="d-flex gap-2 flex-wrap">
                 <?= Html::a('Reception Sign In', ['/site/login'], ['class' => 'btn btn-primary btn-lg']) ?>
                 <?= Html::a('Create Reception Account', ['/site/reception-signup'], ['class' => 'btn btn-outline-primary btn-lg']) ?>
+                <?= Html::beginForm(['/site/change-branch'], 'post', ['class' => 'd-inline']) ?>
+                    <?= Html::submitButton('Change Branch', ['class' => 'btn btn-outline-secondary btn-lg']) ?>
+                <?= Html::endForm() ?>
             </div>
         </div></div>
     <?php else: ?>
@@ -48,8 +51,10 @@ $this->params['meta_description'] = 'Self-service visitor check-in and check-out
             <h2 class="h3 mt-2"><?= Html::encode($branches[$selectedBranch]) ?></h2>
             <p class="text-body-secondary">Reception: <strong><?= Html::encode(Yii::$app->user->identity->username) ?></strong></p>
             <div class="d-flex gap-2 flex-wrap">
-                <?= Html::a('Check-In Visitor', ['/visitor/check-in'], ['class' => 'btn btn-success btn-lg']) ?>
-                <?= Html::a('Check-Out Visitor', ['/visitor/checkout-page'], ['class' => 'btn btn-primary btn-lg']) ?>
+                <?= Html::a('Reception Dashboard', ['/site/reception-dashboard'], ['class' => 'btn btn-primary btn-lg']) ?>
+                <?= Html::beginForm(['/site/change-branch'], 'post', ['class' => 'd-inline']) ?>
+                    <?= Html::submitButton('Change Branch', ['class' => 'btn btn-outline-secondary btn-lg']) ?>
+                <?= Html::endForm() ?>
             </div>
         </div></div>
     <?php endif; ?>

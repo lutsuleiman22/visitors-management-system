@@ -48,7 +48,7 @@ class ReceptionSignupForm extends Model
             $this->addError('username', 'Please select a PBZ branch before creating an account.');
             return null;
         }
-        $user->status = User::STATUS_ACTIVE;
+        $user->status = User::STATUS_INACTIVE;
         $user->setPassword($this->password);
         $user->generateAuthKey();
 

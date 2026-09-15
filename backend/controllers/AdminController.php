@@ -43,6 +43,7 @@ class AdminController extends BaseController
             }
             $data = [
                 'totalUsers' => (int) $userQuery->count(),
+                'pendingUsers' => (int) User::find()->where(['role' => User::ROLE_RECEPTION, 'status' => User::STATUS_INACTIVE])->count(),
                 'totalVisitors' => (int) $visitorQuery->count(),
                 'totalVisits' => (int) $visitQuery->count(),
                 'activeVisits' => (int) $activeQuery->count(),
@@ -57,6 +58,7 @@ class AdminController extends BaseController
             Yii::error($exception->getMessage(), __METHOD__);
             $data = [
                 'totalUsers' => 0,
+                'pendingUsers' => 0,
                 'totalVisitors' => 0,
                 'totalVisits' => 0,
                 'activeVisits' => 0,
