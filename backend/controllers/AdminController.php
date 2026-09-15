@@ -6,10 +6,13 @@ namespace backend\controllers;
 
 use backend\components\BaseController;
 use common\models\AuditLog;
+use common\models\Branch;
+use common\models\Department;
 use common\models\Notification;
 use common\models\User;
 use common\models\Visit;
 use common\models\Visitor;
+use common\services\AuditLogService;
 use common\services\BranchCatalog;
 use Yii;
 use yii\helpers\Html;
@@ -80,7 +83,117 @@ class AdminController extends BaseController
         return $this->render('branches', [
             'branches' => BranchCatalog::all(),
             'departments' => BranchCatalog::departments(),
+            'branchModels' => Branch::find()->with('departments')->where(['status' => 1])->orderBy(['name' => SORT_ASC])->all(),
         ]);
+    }
+
+    public function actionAddBranch(): Response
+    {
+        $this->requireRole(User::ROLE_ADMIN);
+        $model = new Branch();
+        $model->load(Yii::$app->request->post());
+        $model->code = strtolower(trim((string) preg_replace('/[^a-z0-9]+/i', '-', (string) $model->name), '-'));
+        if ($model->validate() && $model->save(false)) {
+            AuditLogService::logAction('create-branch', 'Branch ' . $model->name . ' created.');
+            Yii::$app->session->setFlash('success', 'Branch added successfully.');
+        } else {
+            Yii::$app->session->setFlash('error', implode(' ', $model->getFirstErrors()));
+        }
+        return $this->redirect(['branches']);
+    }
+
+    public function actionAddDepartment(): Response
+    {
+        $this->requireRole(User::ROLE_ADMIN);
+        $model = new Department();
+        $model->load(Yii::$app->request->post());
+        $model->code = strtolower(trim((string) preg_replace('/[^a-z0-9]+/i', '-', (string) $model->name), '-'));
+        if ($model->validate() && $model->save(false)) {
+            AuditLogService::logAction('create-department', 'Department ' . $model->name . ' created.');
+            Yii::$app->session->setFlash('success', 'Department added successfully.');
+        } else {
+            Yii::$app->session->setFlash('error', implode(' ', $model->getFirstErrors()));
+        }
+        return $this->redirect(['branches']);
+    }
+
+    public function actionViewBranch(int $id): string|Response
+    {
+        $this->requireRole(User::ROLE_ADMIN);
+        return $this->render('branch-view', ['model' => $this->findBranch($id)]);
+    }
+
+    public function actionUpdateBranch(int $id): string|Response
+    {
+        $this->requireRole(User::ROLE_ADMIN);
+        $model = $this->findBranch($id);
+        $code = $model->code;
+        if ($model->load(Yii::$app->request->post())) {
+            $model->code = $code;
+            if ($model->save()) {
+                Yii::$app->session->setFlash('success', 'Branch updated successfully.');
+                return $this->redirect(['view-branch', 'id' => $model->id]);
+            }
+        }
+        return $this->render('branch-update', ['model' => $model]);
+    }
+
+    public function actionDeleteBranch(int $id): Response
+    {
+        $this->requireRole(User::ROLE_ADMIN);
+        $model = $this->findBranch($id);
+        $inUse = User::find()->where(['branch_code' => $model->code])->exists()
+            || Visit::find()->where(['branch_code' => $model->code])->exists();
+        if ($inUse) {
+            Yii::$app->session->setFlash('error', 'This branch cannot be deleted because it has users or visitor records.');
+            return $this->redirect(['branches']);
+        }
+        $model->delete();
+        Yii::$app->session->setFlash('success', 'Branch deleted successfully.');
+        return $this->redirect(['branches']);
+    }
+
+    public function actionUpdateDepartment(int $id): string|Response
+    {
+        $this->requireRole(User::ROLE_ADMIN);
+        $model = $this->findDepartment($id);
+        $code = $model->code;
+        if ($model->load(Yii::$app->request->post())) {
+            $model->code = $code;
+            if ($model->save()) {
+                Yii::$app->session->setFlash('success', 'Department updated successfully.');
+                return $this->redirect(['view-branch', 'id' => $model->branch_id]);
+            }
+        }
+        return $this->render('department-update', ['model' => $model]);
+    }
+
+    public function actionDeleteDepartment(int $id): Response
+    {
+        $this->requireRole(User::ROLE_ADMIN);
+        $model = $this->findDepartment($id);
+        $branchId = $model->branch_id;
+        $model->delete();
+        Yii::$app->session->setFlash('success', 'Department deleted successfully.');
+        return $this->redirect(['view-branch', 'id' => $branchId]);
+    }
+
+    private function findBranch(int $id): Branch
+    {
+        $model = Branch::findOne($id);
+        if ($model === null) {
+            throw new \yii\web\NotFoundHttpException('Branch not found.');
+        }
+        return $model;
+    }
+
+    private function findDepartment(int $id): Department
+    {
+        $model = Department::findOne($id);
+        if ($model === null) {
+            throw new \yii\web\NotFoundHttpException('Department not found.');
+        }
+        return $model;
     }
 
     public function actionStats(): Response
@@ -173,14 +286,17 @@ class AdminController extends BaseController
                 throw new ServerErrorHttpException('PDF export dependency is not installed.');
             }
 
-            [$visits, $startDate, $endDate, $filterType] = $this->timeReportData();
+            [$visits, $startDate, $endDate, $filterType, $filterValue, $filters] = $this->timeReportData();
             $html = '<h1>Visitor Report</h1>'
                 . '<p>Period: ' . Html::encode($startDate->format('Y-m-d')) . ' to ' . Html::encode($endDate->format('Y-m-d')) . '</p>'
                 . '<table border="1" cellpadding="6" cellspacing="0" width="100%">'
-                . '<thead><tr><th>Name</th><th>Host</th><th>Status</th><th>Date</th></tr></thead><tbody>';
+                . '<thead><tr><th>Name</th><th>Branch</th><th>Department</th><th>Checked In By</th><th>Checked Out By</th><th>Status</th><th>Date</th></tr></thead><tbody>';
             foreach ($visits as $visit) {
                 $html .= '<tr><td>' . Html::encode($visit->visitor?->full_name ?? 'Unknown visitor')
-                    . '</td><td>' . Html::encode($visit->host?->username ?? 'Unassigned')
+                    . '</td><td>' . Html::encode($filters['branches'][$visit->branch_code] ?? 'Unassigned')
+                    . '</td><td>' . Html::encode($filters['departments'][$visit->branch_code][$visit->department_code] ?? '—')
+                    . '</td><td>' . Html::encode($visit->checkedInBy?->username ?? 'Unknown / legacy')
+                    . '</td><td>' . Html::encode($visit->checkedOutBy?->username ?? ($visit->check_out_time ? 'Unknown / legacy' : '—'))
                     . '</td><td>' . Html::encode($visit->isCheckedIn() ? 'Inside' : 'Checked out')
                     . '</td><td>' . Html::encode($visit->check_in_time ?: '—') . '</td></tr>';
             }
@@ -211,15 +327,18 @@ class AdminController extends BaseController
                 throw new ServerErrorHttpException('Excel export dependency is not installed.');
             }
 
-            [$visits, , , $filterType] = $this->timeReportData();
+            [$visits, , , $filterType, , $filters] = $this->timeReportData();
             $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
             $sheet = $spreadsheet->getActiveSheet();
-            $sheet->fromArray(['Name', 'Host', 'Status', 'Date'], null, 'A1');
+            $sheet->fromArray(['Name', 'Branch', 'Department', 'Checked In By', 'Checked Out By', 'Status', 'Date'], null, 'A1');
             $rows = [];
             foreach ($visits as $visit) {
                 $rows[] = [
                     (string) ($visit->visitor?->full_name ?? 'Unknown visitor'),
-                    (string) ($visit->host?->username ?? 'Unassigned'),
+                    (string) ($filters['branches'][$visit->branch_code] ?? 'Unassigned'),
+                    (string) ($filters['departments'][$visit->branch_code][$visit->department_code] ?? '—'),
+                    (string) ($visit->checkedInBy?->username ?? 'Unknown / legacy'),
+                    (string) ($visit->checkedOutBy?->username ?? ($visit->check_out_time ? 'Unknown / legacy' : '—')),
                     $visit->isCheckedIn() ? 'Inside' : 'Checked out',
                     (string) ($visit->check_in_time ?: ''),
                 ];
@@ -228,7 +347,7 @@ class AdminController extends BaseController
                 $sheet->fromArray($rows, null, 'A2');
             }
             $sheet->getStyle('A1:D1')->getFont()->setBold(true);
-            foreach (range('A', 'D') as $column) {
+            foreach (range('A', 'G') as $column) {
                 $sheet->getColumnDimension($column)->setAutoSize(true);
             }
 
@@ -256,7 +375,7 @@ class AdminController extends BaseController
     {
         $this->requireRole(User::ROLE_ADMIN);
 
-        [$visits, $startDate, $endDate, $filterType, $filterValue] = $this->timeReportData($filterType);
+        [$visits, $startDate, $endDate, $filterType, $filterValue, $filters] = $this->timeReportData($filterType);
 
         return $this->render($view, [
             'title' => $title,
@@ -265,10 +384,11 @@ class AdminController extends BaseController
             'filterValue' => $filterValue,
             'startDate' => $startDate,
             'endDate' => $endDate,
+            'filters' => $filters,
         ]);
     }
 
-    /** @return array{0: array, 1: \DateTimeImmutable, 2: \DateTimeImmutable, 3: string, 4: string} */
+    /** @return array{0: array, 1: \DateTimeImmutable, 2: \DateTimeImmutable, 3: string, 4: string, 5: array} */
     private function timeReportData(string|null $forcedType = null): array
     {
         $filterType = $forcedType ?? (string) Yii::$app->request->get('type', 'daily');
@@ -306,20 +426,35 @@ class AdminController extends BaseController
             $startDate = new \DateTimeImmutable($selectedYear . '-01-01');
             $endDate = $startDate->modify('+1 year')->modify('-1 second');
         } else {
-            $filterValue = $today->format('Y-m-d');
-            $startDate = $today;
+            $filterValue = $this->filterValue('daily');
+            $selectedDate = \DateTimeImmutable::createFromFormat('!Y-m-d', $filterValue);
+            if (!$selectedDate || $selectedDate->format('Y-m-d') !== $filterValue || $selectedDate > $today) {
+                $selectedDate = $today;
+                $filterValue = $today->format('Y-m-d');
+            }
+            $startDate = $selectedDate;
             $endDate = $today->setTime(23, 59, 59);
+            $endDate = $selectedDate->setTime(23, 59, 59);
         }
 
         $start = $startDate->getTimestamp();
         $end = $endDate->getTimestamp();
+        $branches = BranchCatalog::all();
+        $departments = BranchCatalog::departments();
+        $branch = trim((string) Yii::$app->request->get('branch', ''));
+        $department = trim((string) Yii::$app->request->get('department', ''));
+        $receptionId = (int) Yii::$app->request->get('reception_id', 0);
         $visits = Visit::find()
-            ->with(['visitor', 'host'])
+            ->with(['visitor', 'host', 'checkedInBy', 'checkedOutBy'])
             ->where(['between', 'created_at', $start, $end])
+            ->andFilterWhere($branch !== '' && array_key_exists($branch, $branches) ? ['branch_code' => $branch] : [])
+            ->andFilterWhere($department !== '' ? ['department_code' => $department] : [])
+            ->andFilterWhere($receptionId > 0 ? ['or', ['checked_in_by_user_id' => $receptionId], ['checked_out_by_user_id' => $receptionId]] : [])
             ->orderBy(['created_at' => SORT_DESC])
             ->all();
 
-        return [$visits, $startDate, $endDate, $filterType, $filterValue];
+        $receptions = User::find()->where(['role' => User::ROLE_RECEPTION, 'status' => User::STATUS_ACTIVE])->orderBy(['username' => SORT_ASC])->all();
+        return [$visits, $startDate, $endDate, $filterType, $filterValue, ['branches' => $branches, 'departments' => $departments, 'receptions' => $receptions, 'branch' => $branch, 'department' => $department, 'receptionId' => $receptionId]];
     }
 
     private function filterValue(string $filterType): string
@@ -328,7 +463,7 @@ class AdminController extends BaseController
             'weekly' => (string) Yii::$app->request->get('date', ''),
             'monthly' => (string) Yii::$app->request->get('month', ''),
             'annual' => (string) Yii::$app->request->get('year', ''),
-            default => date('Y-m-d'),
+            default => (string) Yii::$app->request->get('date', date('Y-m-d')),
         };
     }
 }

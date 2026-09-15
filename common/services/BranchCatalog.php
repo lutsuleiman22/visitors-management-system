@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace common\services;
 
+use common\models\Branch;
+use common\models\Department;
+
 final class BranchCatalog
 {
     /** @return array<string, string> */
     public static function all(): array
     {
-        return [
+        $fallback = [
             'pbz-head-office' => 'PBZ Head Office - Zanzibar',
             'pbz-mwanakwerekwe' => 'PBZ Mwanakwerekwe Branch',
             'pbz-malindi' => 'PBZ Malindi Branch',
@@ -17,12 +20,19 @@ final class BranchCatalog
             'pbz-wete' => 'PBZ Wete Branch',
             'pbz-nungwi' => 'PBZ Nungwi Branch',
         ];
+
+        try {
+            $items = Branch::find()->select(['code', 'name'])->where(['status' => 1])->orderBy(['name' => SORT_ASC])->asArray()->all();
+            return $items === [] ? $fallback : array_column($items, 'name', 'code');
+        } catch (\Throwable) {
+            return $fallback;
+        }
     }
 
     /** @return array<string, array<string, string>> */
     public static function departments(): array
     {
-        return [
+        $fallback = [
             'pbz-head-office' => [
                 'customer-service' => 'Customer Service',
                 'accounts' => 'Accounts',
@@ -59,6 +69,20 @@ final class BranchCatalog
                 'operations' => 'Operations',
             ],
         ];
+
+        try {
+            $items = Department::find()->joinWith('branch')->select(['departments.branch_id', 'departments.code', 'departments.name', 'branches.code AS branch_code'])->asArray()->all();
+            if ($items === []) {
+                return $fallback;
+            }
+            $result = [];
+            foreach ($items as $item) {
+                $result[$item['branch_code']][$item['code']] = $item['name'];
+            }
+            return $result;
+        } catch (\Throwable) {
+            return $fallback;
+        }
     }
 
     /** @return array<string, string> */

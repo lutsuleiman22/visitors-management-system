@@ -8,6 +8,7 @@ declare(strict_types=1);
 /** @var string $filterValue */
 /** @var DateTimeImmutable $startDate */
 /** @var DateTimeImmutable $endDate */
+/** @var array $filters */
 
 use yii\helpers\Html;
 use yii\helpers\Url;
@@ -22,6 +23,11 @@ if ($filterType === 'weekly') {
     $exportQuery['month'] = $filterValue;
 } elseif ($filterType === 'annual') {
     $exportQuery['year'] = $filterValue;
+}
+foreach (['branch', 'department', 'reception_id'] as $filterKey) {
+    if (isset($_GET[$filterKey]) && $_GET[$filterKey] !== '') {
+        $exportQuery[$filterKey] = $_GET[$filterKey];
+    }
 }
 $pdfUrl = Url::to(array_merge(['/admin/export-pdf'], $exportQuery));
 $excelUrl = Url::to(array_merge(['/admin/export-excel'], $exportQuery));
@@ -39,9 +45,18 @@ $excelUrl = Url::to(array_merge(['/admin/export-excel'], $exportQuery));
             <p class="text-body-secondary mb-0">Records created from <?= Html::encode($startDate->format('Y-m-d')) ?> to <?= Html::encode($endDate->format('Y-m-d')) ?>.</p>
         </div>
     </div>
-    <?php if ($filterType !== 'daily'): ?>
+    <h2 class="h5 mb-3">Report filters</h2>
         <?= Html::beginForm(['/admin/' . $filterType], 'get', ['class' => 'report-filter mb-4']) ?>
-            <?php if ($filterType === 'weekly'): ?>
+            <?= Html::label('Branch', 'report-branch', ['class' => 'form-label']) ?>
+            <?= Html::dropDownList('branch', $filters['branch'], $filters['branches'], ['id' => 'report-branch', 'class' => 'form-select', 'prompt' => 'All branches']) ?>
+            <?= Html::label('Department', 'report-department', ['class' => 'form-label']) ?>
+            <?= Html::dropDownList('department', $filters['department'], array_reduce($filters['departments'], static fn (array $carry, array $items): array => $carry + $items, []), ['id' => 'report-department', 'class' => 'form-select', 'prompt' => 'All departments']) ?>
+            <?= Html::label('Reception', 'report-reception', ['class' => 'form-label']) ?>
+            <?= Html::dropDownList('reception_id', $filters['receptionId'], \yii\helpers\ArrayHelper::map($filters['receptions'], 'id', 'username'), ['id' => 'report-reception', 'class' => 'form-select', 'prompt' => 'All reception']) ?>
+            <?php if ($filterType === 'daily'): ?>
+                <?= Html::label('Specific day', 'report-date', ['class' => 'form-label']) ?>
+                <?= Html::input('date', 'date', $filterValue, ['id' => 'report-date', 'max' => date('Y-m-d'), 'class' => 'form-control']) ?>
+            <?php elseif ($filterType === 'weekly'): ?>
                 <?= Html::label('Select Date', 'report-date', ['class' => 'form-label']) ?>
                 <?= Html::input('date', 'date', $filterValue, ['id' => 'report-date', 'max' => date('Y-m-d'), 'class' => 'form-control']) ?>
             <?php elseif ($filterType === 'monthly'): ?>
@@ -53,20 +68,22 @@ $excelUrl = Url::to(array_merge(['/admin/export-excel'], $exportQuery));
             <?php endif; ?>
             <?= Html::submitButton('Apply Filter', ['class' => 'btn btn-warning align-self-end']) ?>
         <?= Html::endForm() ?>
-    <?php endif; ?>
     <section class="report-table-panel">
         <div class="report-table-heading"><div><h2>Visitor activity</h2><p><?= count($visits) ?> matching records</p></div></div>
         <div class="table-responsive">
             <table class="table align-middle mb-0">
-                <thead><tr><th>Name</th><th>Host</th><th>Status</th><th>Check-in time</th><th>Created</th></tr></thead>
+                <thead><tr><th>Name</th><th>Branch</th><th>Department</th><th>Checked in by</th><th>Checked out by</th><th>Status</th><th>Check-in time</th><th>Created</th></tr></thead>
                 <tbody>
                 <?php if ($visits === []): ?>
-                    <tr><td colspan="5" class="text-center text-body-secondary py-5">No records found for this period.</td></tr>
+                    <tr><td colspan="8" class="text-center text-body-secondary py-5">No records found for this period.</td></tr>
                 <?php else: foreach ($visits as $visit): ?>
                     <?php $inside = $visit->isCheckedIn(); ?>
                     <tr>
                         <td><strong><?= Html::encode($visit->visitor?->full_name ?? 'Unknown visitor') ?></strong></td>
-                        <td><?= Html::encode($visit->host?->username ?? 'Unassigned') ?></td>
+                        <td><?= Html::encode($filters['branches'][$visit->branch_code] ?? 'Unassigned') ?></td>
+                        <td><?= Html::encode($filters['departments'][$visit->branch_code][$visit->department_code] ?? '—') ?></td>
+                        <td><?= Html::encode($visit->checkedInBy?->username ?? 'Unknown / legacy') ?></td>
+                        <td><?= Html::encode($visit->checkedOutBy?->username ?? ($visit->check_out_time ? 'Unknown / legacy' : '—')) ?></td>
                         <td><span class="report-status report-status--<?= $inside ? 'inside' : 'out' ?>"><?= $inside ? 'Inside' : 'Checked out' ?></span></td>
                         <td class="text-body-secondary"><?= Html::encode($visit->check_in_time ?: '—') ?></td>
                         <td class="text-body-secondary"><?= $visit->created_at ? Html::encode(date('Y-m-d H:i', (int) $visit->created_at)) : '—' ?></td>

@@ -13,4 +13,4 @@ use yii\helpers\Url;
 		Dashboard
 	</a>
 </div>
-<?= $this->render('_time-report', ['title' => $title, 'visits' => $visits, 'filterType' => $filterType, 'filterValue' => $filterValue, 'startDate' => $startDate, 'endDate' => $endDate]) ?>
+<?= $this->render('_time-report', ['title' => $title, 'visits' => $visits, 'filterType' => $filterType, 'filterValue' => $filterValue, 'startDate' => $startDate, 'endDate' => $endDate, 'filters' => $filters]) ?>
