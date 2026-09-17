@@ -42,6 +42,7 @@ $this->render('_head');
                 <a class="sidebar-link" href="<?= Html::encode(Yii::$app->urlManager->createUrl(['/admin/branches'])) ?>"><span class="sidebar-icon">B</span><span class="menu-text">Branches & Departments</span></a>
                 <a class="sidebar-link" href="<?= Html::encode(Yii::$app->urlManager->createUrl(['/user/index'])) ?>"><span class="sidebar-icon">U</span><span class="menu-text">User Management</span></a>
                 <a class="sidebar-link" href="<?= Html::encode(Yii::$app->urlManager->createUrl(['/admin/reports'])) ?>"><span class="sidebar-icon">R</span><span class="menu-text">Reports</span></a>
+                <a class="sidebar-link" href="<?= Html::encode(Yii::$app->urlManager->createUrl(['/dashboard/analytics'])) ?>"><span class="sidebar-icon">A</span><span class="menu-text">Analytics</span></a>
                 <a class="sidebar-link" href="<?= Html::encode(Yii::$app->urlManager->createUrl(['/visit/index'])) ?>"><span class="sidebar-icon">V</span><span class="menu-text">Visitors</span></a>
                 <a class="sidebar-link" href="<?= Html::encode(Yii::$app->urlManager->createUrl(['/notification/index'])) ?>"><span class="sidebar-icon">N</span><span class="menu-text">Notifications</span></a>
                 <a class="sidebar-link" href="<?= Html::encode(Yii::$app->urlManager->createUrl(['/audit-log/index'])) ?>"><span class="sidebar-icon">A</span><span class="menu-text">Audit Logs</span></a>

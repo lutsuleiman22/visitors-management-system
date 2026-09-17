@@ -13,10 +13,18 @@ use yii\web\Response;
 
 class DashboardController extends BaseController
 {
-    public function actionAnalytics(): Response
+    public function actionAnalytics(): string|Response
     {
         $this->requireRole(User::ROLE_ADMIN);
-        return $this->redirect(['/admin/dashboard']);
+        $today = date('Y-m-d 00:00:00');
+        NotificationService::notifyOverdue();
+
+        return $this->render('analytics', [
+            'today' => (int) Visit::find()->where(['>=', 'check_in_time', $today])->count(),
+            'inside' => (int) Visit::find()->where(['status' => Visit::STATUS_CHECKED_IN, 'check_out_time' => null])->count(),
+            'checkedOut' => (int) Visit::find()->where(['status' => Visit::STATUS_CHECKED_OUT])->count(),
+            'pending' => (int) Visit::find()->where(['status' => 'Pending'])->count(),
+        ]);
     }
 
     public function actionChartData(): Response

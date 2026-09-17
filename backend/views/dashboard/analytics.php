@@ -20,7 +20,6 @@ $this->registerJsFile('https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.um
 </div>
 <div class="row g-4"><div class="col-lg-8"><div class="card shadow-sm"><div class="card-body"><canvas id="traffic-chart" height="120"></canvas></div></div></div><div class="col-lg-4"><div class="card shadow-sm"><div class="card-body"><canvas id="roles-chart"></canvas></div></div></div></div>
 <?php $this->registerJs(<<<'JS'
-fetch('chart-data').then(function (response) { return response.json(); }).then(function (data) {
 fetch('chart-data').then(function (response) { return response.json(); }).then(function (response) {
     if (!response.success) return;
     const data = response.data;

@@ -13,6 +13,6 @@ class AnalyticsController extends BaseController
     public function actionIndex(): Response
     {
         $this->requireRole(User::ROLE_ADMIN);
-        return $this->redirect(['/admin/dashboard']);
+        return $this->redirect(['/dashboard/analytics']);
     }
 }
