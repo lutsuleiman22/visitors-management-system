@@ -49,8 +49,8 @@ $stepName = $step ?? 'form';
                         <div class="col-md-6"><?= $form->field($model, 'full_name')->textInput(['maxlength' => true]) ?></div>
                         <div class="col-md-6"><?= $form->field($model, 'phone_number')->textInput(['maxlength' => true]) ?></div>
                         <div class="col-md-6"><?= $form->field($model, 'gender')->dropDownList(['Male' => 'Male', 'Female' => 'Female', 'Other' => 'Other'], ['prompt' => 'Select gender']) ?></div>
-                        <div class="col-md-6"><?= $form->field($model, 'origin')->textInput(['maxlength' => true]) ?></div>
-                        <div class="col-md-6"><?= $form->field($model, 'destination')->textInput(['maxlength' => true]) ?></div>
+                        <div class="col-md-6"><?= $form->field($model, 'origin')->textInput(['maxlength' => true, 'placeholder' => 'From']) ?></div>
+                        <div class="col-md-6"><?= $form->field($model, 'destination')->textInput(['maxlength' => true, 'placeholder' => 'To']) ?></div>
                         <div class="col-md-6"><?= $form->field($model, 'department_code')->dropDownList($departments, ['prompt' => 'Select department (optional)']) ?></div>
                         <div class="col-md-6"><?= $form->field($model, 'host_name')->textInput(['maxlength' => true, 'list' => 'confirm-host-list', 'placeholder' => 'Host name (optional)']) ?></div>
                         <div class="col-md-6"><?= $form->field($model, 'purpose')->textInput(['maxlength' => true]) ?></div>

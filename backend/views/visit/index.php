@@ -47,7 +47,6 @@ $canCheckOut = in_array($role, ['admin', 'reception'], true);
         'tableOptions' => ['class' => 'table table-striped table-bordered table-hover align-middle'],
         'columns' => [
             ['class' => 'yii\grid\SerialColumn'],
-            'id',
             [
                 'attribute' => 'visitor_name',
                 'label' => 'Visitor',
@@ -81,7 +80,6 @@ $canCheckOut = in_array($role, ['admin', 'reception'], true);
                 'label' => 'Checked In By',
                 'value' => static fn (Visit $model): string => $model->checkedInBy?->username ?? 'Unknown / legacy',
             ],
-            'purpose',
             'from_location',
             'destination',
             [

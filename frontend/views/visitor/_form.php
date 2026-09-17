@@ -11,8 +11,8 @@ use yii\helpers\Html;
         <?= $form->field($model, 'full_name')->textInput(['maxlength' => true, 'placeholder' => 'e.g. Jane Doe', 'autofocus' => true]) ?>
         <?= $form->field($model, 'phone_number')->textInput(['maxlength' => true, 'placeholder' => 'e.g. +255 700 000 000']) ?>
         <?= $form->field($model, 'gender')->dropDownList(['Male' => 'Male', 'Female' => 'Female', 'Other' => 'Other'], ['prompt' => 'Select gender']) ?>
-        <?= $form->field($model, 'origin')->textInput(['maxlength' => true, 'placeholder' => 'Where are you coming from?']) ?>
-        <?= $form->field($model, 'destination')->textInput(['maxlength' => true, 'placeholder' => 'Where are you going?']) ?>
+        <?= $form->field($model, 'origin')->textInput(['maxlength' => true, 'placeholder' => 'From']) ?>
+        <?= $form->field($model, 'destination')->textInput(['maxlength' => true, 'placeholder' => 'To']) ?>
         <?= $form->field($model, 'department_code')->dropDownList($departments, ['prompt' => 'Select department (optional)']) ?>
         <?= $form->field($model, 'host_name')->textInput(['maxlength' => true, 'list' => 'host-list', 'placeholder' => 'Search or type host name (optional)']) ?>
         <datalist id="host-list">

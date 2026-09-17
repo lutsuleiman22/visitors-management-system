@@ -81,7 +81,6 @@ $canCheckOut = in_array($role, ['admin', 'reception'], true);
                 'attribute' => 'department_code',
                 'value' => $model->department_code ?: '—',
             ],
-            'purpose',
             'from_location',
             'destination',
             [
