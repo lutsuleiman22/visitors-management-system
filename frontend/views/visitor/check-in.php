@@ -36,7 +36,6 @@ $stepName = $step ?? 'form';
                     </div>
                     <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center">
                         <?= Html::a('New Check-In', ['check-in'], ['class' => 'btn btn-outline-secondary']) ?>
-                        <?= Html::a('Print Pass', ['pass', 'id' => (int) $visit->id], ['class' => 'btn btn-checkin']) ?>
                     </div>
                 <?php elseif ($stepName === 'preview'): ?>
                     <div class="mb-3">

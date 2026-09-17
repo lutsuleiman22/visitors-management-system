@@ -29,14 +29,6 @@ $items = [
         'visible' => $deskReady,
     ],
     [
-        'label' => 'About',
-        'url' => ['/site/about'],
-    ],
-    [
-        'label' => 'Contact',
-        'url' => ['/site/contact'],
-    ],
-    [
         'label' => 'Admin Panel',
         'url' => $backendBaseUrl . '/index.php/site/login',
         'linkOptions' => ['class' => 'btn btn-sm btn-warning ms-md-2'],

@@ -219,28 +219,7 @@ class SiteController extends Controller
      */
     public function actionContact(): string|Response
     {
-        $model = new ContactForm();
-
-        if ($model->load(Yii::$app->request->post()) && $model->validate()) {
-            $sent = $model->sendEmail(
-                $this->mailer,
-                Yii::$app->params['adminEmail'],
-                Yii::$app->params['senderEmail'],
-                Yii::$app->params['senderName'],
-            );
-
-            if ($sent) {
-                Yii::$app->session->setFlash('success', 'Thank you for contacting us. We will respond to you as soon as possible.');
-            } else {
-                Yii::$app->session->setFlash('error', 'There was an error sending your message.');
-            }
-
-            return $this->refresh();
-        }
-
-        return $this->render('contact', [
-            'model' => $model,
-        ]);
+        return $this->redirect(['/site/index']);
     }
 
     /**
@@ -250,7 +229,7 @@ class SiteController extends Controller
      */
     public function actionAbout(): string
     {
-        return $this->render('about');
+        return $this->redirect(['/site/index']);
     }
 
     /**

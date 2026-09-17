@@ -27,7 +27,6 @@ $this->params['breadcrumbs'][] = 'Pass';
             <?= Html::a('&larr; New Check-In', ['check-in'], ['class' => 'btn btn-outline-secondary']) ?>
             <?= Html::a('Go to Check-Out', ['check-out'], ['class' => 'btn btn-outline-primary']) ?>
         </div>
-        <button type="button" class="btn btn-dark" onclick="window.print()">Print Pass</button>
     </div>
 
     <div class="row justify-content-center">

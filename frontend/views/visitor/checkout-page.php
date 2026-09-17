@@ -37,7 +37,6 @@ $this->params['breadcrumbs'][] = $this->title;
                             <div><span>Check-in time</span><strong><?= Html::encode($visit->check_in_time ?: '—') ?></strong></div>
                         </div>
                         <div class="visitor-action-row">
-                            <button type="button" class="btn visitor-primary-button" onclick="window.print()">Print receipt</button>
                             <a href="<?= Html::encode(Yii::$app->urlManager->createUrl(['/visitor/checkout-page'])) ?>" class="btn visitor-secondary-button">New search</a>
                         </div>
                     </div>
