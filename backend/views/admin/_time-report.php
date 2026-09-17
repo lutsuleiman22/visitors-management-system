@@ -23,6 +23,8 @@ if ($filterType === 'weekly') {
     $exportQuery['month'] = $filterValue;
 } elseif ($filterType === 'annual') {
     $exportQuery['year'] = $filterValue;
+} else {
+    $exportQuery['date'] = $filterValue;
 }
 foreach (['branch', 'department', 'reception_id'] as $filterKey) {
     if (isset($_GET[$filterKey]) && $_GET[$filterKey] !== '') {

@@ -41,33 +41,29 @@ $stepName = $step ?? 'form';
                 <?php elseif ($stepName === 'preview'): ?>
                     <div class="mb-3">
                         <span class="badge bg-dark-subtle text-dark">Step 2 of 4</span>
-                        <h2 class="h4 mt-2 mb-1">Review Visitor Details</h2>
-                        <p class="text-muted mb-0">Check the information before saving the visitor registration.</p>
-                    </div>
-                    <div class="row g-3 mb-4">
-                        <div class="col-md-6"><div class="border rounded p-3"><strong>Full Name</strong><div><?= Html::encode($model->full_name) ?></div></div></div>
-                        <div class="col-md-6"><div class="border rounded p-3"><strong>Phone Number</strong><div><?= Html::encode($model->phone_number) ?></div></div></div>
-                        <div class="col-md-6"><div class="border rounded p-3"><strong>Gender</strong><div><?= Html::encode($model->gender ?: 'Not provided') ?></div></div></div>
-                        <div class="col-md-6"><div class="border rounded p-3"><strong>Origin</strong><div><?= Html::encode($model->origin ?: 'Not provided') ?></div></div></div>
-                        <div class="col-md-6"><div class="border rounded p-3"><strong>Destination</strong><div><?= Html::encode($model->destination ?: 'Not provided') ?></div></div></div>
-                        <div class="col-md-6"><div class="border rounded p-3"><strong>Department</strong><div><?= Html::encode($model->department_code ? (frontend\models\CheckInForm::departmentList()[$model->department_code] ?? $model->department_code) : 'Not provided') ?></div></div></div>
-                        <div class="col-md-6"><div class="border rounded p-3"><strong>Host</strong><div><?= Html::encode($model->host_name ?: 'Not provided') ?></div></div></div>
+                        <h2 class="h4 mt-2 mb-1">Confirm Visitor Details</h2>
+                        <p class="text-muted mb-0">Edit any detail below, update the preview, then confirm the registration.</p>
                     </div>
                     <?php $form = ActiveForm::begin(['id' => 'check-in-confirm-form', 'options' => ['autocomplete' => 'off']]); ?>
-                    <?= Html::hiddenInput('step', 'confirm') ?>
-                    <?= Html::hiddenInput('CheckInForm[full_name]', $model->full_name) ?>
-                    <?= Html::hiddenInput('CheckInForm[phone_number]', $model->phone_number) ?>
-                    <?= Html::hiddenInput('CheckInForm[gender]', $model->gender) ?>
-                    <?= Html::hiddenInput('CheckInForm[origin]', $model->origin) ?>
-                    <?= Html::hiddenInput('CheckInForm[destination]', $model->destination) ?>
-                    <?= Html::hiddenInput('CheckInForm[host_name]', $model->host_name) ?>
-                    <?= Html::hiddenInput('CheckInForm[department_code]', $model->department_code) ?>
-                    <?= Html::hiddenInput('CheckInForm[signature_data]', $model->signature_data) ?>
+                    <?= Html::hiddenInput('step', 'preview', ['id' => 'confirm-step']) ?>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6"><?= $form->field($model, 'full_name')->textInput(['maxlength' => true]) ?></div>
+                        <div class="col-md-6"><?= $form->field($model, 'phone_number')->textInput(['maxlength' => true]) ?></div>
+                        <div class="col-md-6"><?= $form->field($model, 'gender')->dropDownList(['Male' => 'Male', 'Female' => 'Female', 'Other' => 'Other'], ['prompt' => 'Select gender']) ?></div>
+                        <div class="col-md-6"><?= $form->field($model, 'origin')->textInput(['maxlength' => true]) ?></div>
+                        <div class="col-md-6"><?= $form->field($model, 'destination')->textInput(['maxlength' => true]) ?></div>
+                        <div class="col-md-6"><?= $form->field($model, 'department_code')->dropDownList($departments, ['prompt' => 'Select department (optional)']) ?></div>
+                        <div class="col-md-6"><?= $form->field($model, 'host_name')->textInput(['maxlength' => true, 'list' => 'confirm-host-list', 'placeholder' => 'Host name (optional)']) ?></div>
+                        <div class="col-md-6"><?= $form->field($model, 'purpose')->textInput(['maxlength' => true]) ?></div>
+                    </div>
+                    <datalist id="confirm-host-list">
+                        <?php foreach ($hosts as $name): ?><option value="<?= Html::encode($name) ?>"><?= Html::encode($name) ?></option><?php endforeach; ?>
+                    </datalist>
+                    <?= Html::hiddenInput('CheckInForm[signature_data]', $model->signature_data, ['id' => 'signature-data']) ?>
                     <?= Html::hiddenInput('CheckInForm[national_id]', $model->national_id) ?>
-                    <?= Html::hiddenInput('CheckInForm[purpose]', $model->purpose) ?>
                     <div class="visitor-check-in-actions">
-                        <?= Html::a('Back to Form', ['check-in'], ['class' => 'btn btn-link']) ?>
-                        <?= Html::submitButton('Confirm & Save', ['class' => 'btn btn-checkin btn-lg px-4']) ?>
+                        <?= Html::submitButton('Update Preview', ['class' => 'btn btn-outline-secondary', 'name' => 'update_preview', 'value' => '1']) ?>
+                        <?= Html::submitButton('Confirm & Save', ['class' => 'btn btn-checkin btn-lg px-4', 'id' => 'confirm-save-checkin', 'name' => 'confirm_checkin', 'value' => '1']) ?>
                     </div>
                     <?php ActiveForm::end(); ?>
                 <?php else: ?>
@@ -95,11 +91,22 @@ $stepName = $step ?? 'form';
 $js = <<<'JS'
 (function () {
     const canvas = document.getElementById('signature-canvas');
-    if (!canvas) return;
-    const context = canvas.getContext('2d');
     const signatureData = document.getElementById('signature-data');
     const form = document.getElementById('check-in-form');
     const previewForm = document.getElementById('check-in-confirm-form');
+    const confirmStep = document.getElementById('confirm-step');
+    const confirmSaveButton = document.getElementById('confirm-save-checkin');
+    if (!canvas) {
+        if (confirmSaveButton && confirmStep) confirmSaveButton.addEventListener('click', function () {
+            confirmStep.value = 'confirm';
+        });
+        if (previewForm) previewForm.addEventListener('submit', function (event) {
+            if (signatureData && signatureData.value) return;
+            event.preventDefault();
+        });
+        return;
+    }
+    const context = canvas.getContext('2d');
     let drawing = false;
     let hasSignature = false;
 
@@ -151,6 +158,10 @@ $js = <<<'JS'
     };
 
     if (form) form.addEventListener('submit', handleSubmit);
+    if (confirmSaveButton && confirmStep) confirmSaveButton.addEventListener('click', function () {
+        confirmStep.value = 'confirm';
+    });
+
     if (previewForm) previewForm.addEventListener('submit', function (event) {
         if (signatureData && signatureData.value) {
             return;

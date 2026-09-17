@@ -81,6 +81,9 @@ class VisitorController extends Controller
     {
         $request = Yii::$app->request;
         $step = $request->post('step', 'form');
+        if ($request->post('confirm_checkin') !== null) {
+            $step = 'confirm';
+        }
         $model = new CheckInForm();
         $hosts = CheckInForm::hostList();
         $departments = CheckInForm::departmentList();
