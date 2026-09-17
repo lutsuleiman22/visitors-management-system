@@ -21,19 +21,6 @@ use yii\helpers\Html;
             <?php endforeach; ?>
         </datalist>
     </div>
-    <div class="col-md-6">
-        <div class="h-100 d-flex flex-column justify-content-between gap-3">
-            <div class="bg-light border rounded p-3 h-100">
-                <div class="small text-uppercase text-muted fw-bold mb-2">Visitor summary</div>
-                <p class="mb-2">Complete the visitor details, preview them, and confirm the registration before final submission.</p>
-                <ul class="small text-muted mb-0 ps-3">
-                    <li>Step 1: enter visitor details</li>
-                    <li>Step 2: check the summary</li>
-                    <li>Step 3: confirm and save</li>
-                </ul>
-            </div>
-        </div>
-    </div>
     <div class="col-12">
         <label class="form-label fw-semibold">Signature <span class="text-danger">*</span></label>
         <div class="signature-box">
