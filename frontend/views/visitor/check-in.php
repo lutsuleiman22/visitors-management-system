@@ -59,7 +59,6 @@ $stepName = $step ?? 'form';
                         <?php foreach ($hosts as $name): ?><option value="<?= Html::encode($name) ?>"><?= Html::encode($name) ?></option><?php endforeach; ?>
                     </datalist>
                     <?= Html::hiddenInput('CheckInForm[signature_data]', $model->signature_data, ['id' => 'signature-data']) ?>
-                    <?= Html::hiddenInput('CheckInForm[national_id]', $model->national_id) ?>
                     <div class="visitor-check-in-actions">
                         <?= Html::submitButton('Update Preview', ['class' => 'btn btn-outline-secondary', 'name' => 'update_preview', 'value' => '1']) ?>
                         <?= Html::submitButton('Confirm & Save', ['class' => 'btn btn-checkin btn-lg px-4', 'id' => 'confirm-save-checkin', 'name' => 'confirm_checkin', 'value' => '1']) ?>

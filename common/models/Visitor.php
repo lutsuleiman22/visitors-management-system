@@ -14,6 +14,7 @@ use yii\db\ActiveRecord;
  * @property int $id
  * @property string $full_name
  * @property string $phone_number
+ * @property string|null $gender
  * @property string|null $national_id
  * @property string|null $photo_path
  * @property int $status
@@ -43,11 +44,11 @@ class Visitor extends ActiveRecord
     {
         return [
             [['full_name', 'phone_number'], 'required'],
-            [['full_name', 'phone_number', 'national_id', 'photo_path'], 'string', 'max' => 255],
+            [['full_name', 'phone_number', 'gender', 'national_id', 'photo_path'], 'string', 'max' => 255],
             [['status', 'created_at', 'updated_at'], 'integer'],
             [['status'], 'default', 'value' => self::STATUS_ACTIVE],
             [['status'], 'in', 'range' => [self::STATUS_ACTIVE, self::STATUS_INACTIVE]],
-            [['full_name', 'phone_number', 'national_id'], 'trim'],
+            [['full_name', 'phone_number', 'gender', 'national_id'], 'trim'],
             [
                 ['phone_number'],
                 'match',
@@ -63,6 +64,7 @@ class Visitor extends ActiveRecord
             'id' => 'ID',
             'full_name' => 'Full Name',
             'phone_number' => 'Phone Number',
+            'gender' => 'Gender',
             'national_id' => 'National ID',
             'photo_path' => 'Photo',
             'status' => 'Status',

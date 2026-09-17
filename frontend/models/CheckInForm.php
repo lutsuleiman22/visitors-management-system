@@ -161,6 +161,7 @@ class CheckInForm extends Model
 
             $visitor->full_name = $this->full_name;
             $visitor->phone_number = $this->phone_number;
+            $visitor->gender = $this->gender;
             $visitor->status = Visitor::STATUS_ACTIVE;
 
             if (!$visitor->save()) {

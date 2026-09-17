@@ -57,8 +57,6 @@ $this->params['breadcrumbs'][] = $this->title;
                             <dl class="row mb-3 small">
                                 <dt class="col-sm-3">Visitor</dt>
                                 <dd class="col-sm-9"><?= Html::encode($matchedVisit->visitor->full_name) ?></dd>
-                                <dt class="col-sm-3">National ID</dt>
-                                <dd class="col-sm-9"><?= Html::encode($matchedVisit->visitor->national_id ?: '—') ?></dd>
                                 <dt class="col-sm-3">Host</dt>
                                 <dd class="col-sm-9"><?= Html::encode($matchedVisit->host->username ?? '—') ?></dd>
                                 <dt class="col-sm-3">Purpose</dt>

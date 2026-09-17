@@ -62,12 +62,16 @@ $canCheckOut = in_array($role, ['admin', 'reception'], true);
                 'value' => $model->visitor->full_name ?? '—',
             ],
             [
-                'label' => 'National ID',
-                'value' => $model->visitor->national_id ?? '—',
-            ],
-            [
                 'label' => 'Phone',
                 'value' => $model->visitor->phone_number ?? '—',
+            ],
+            [
+                'label' => 'Gender',
+                'value' => $model->visitor->gender ?? '—',
+            ],
+            [
+                'label' => 'PBZ Branch',
+                'value' => \common\services\BranchCatalog::all()[$model->branch_code] ?? 'Unassigned',
             ],
             [
                 'attribute' => 'host_user_id',
@@ -78,6 +82,15 @@ $canCheckOut = in_array($role, ['admin', 'reception'], true);
                 'value' => $model->department_code ?: '—',
             ],
             'purpose',
+            'from_location',
+            'destination',
+            [
+                'label' => 'Signature',
+                'format' => 'raw',
+                'value' => $model->signature_path
+                    ? Html::a(Html::img(Yii::getAlias('@web/' . ltrim($model->signature_path, '/')), ['alt' => 'Visitor signature', 'style' => 'max-width: 320px; max-height: 120px; border: 1px solid #dce6eb; border-radius: 6px; padding: 4px; background: #fff;']), Yii::getAlias('@web/' . ltrim($model->signature_path, '/')), ['target' => '_blank', 'rel' => 'noopener'])
+                    : '—',
+            ],
             'qr_code_hash',
             'status',
             'check_in_time',

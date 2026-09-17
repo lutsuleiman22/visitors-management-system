@@ -419,3 +419,11 @@ a.desc:after {
 [data-bs-theme="dark"] .extension-card:hover {
     box-shadow: 0 0 0 1px var(--bs-border-color), 0 8px 24px rgba(0, 0, 0, .4) !important;
 }
+
+/* Compact landing banner */
+.site-index .hero-banner { background: linear-gradient(135deg, #173b56 0%, #216a78 100%); padding: 1.75rem 2rem !important; }
+.site-index .hero-banner h1 { font-size: 2.25rem; margin-bottom: .5rem !important; }
+.site-index .hero-banner p { font-size: 1rem; }
+.site-index .hero-banner::before { background: linear-gradient(90deg, rgba(214,168,79,.12), transparent 55%); }
+@media (max-width: 575.98px) { .site-index .hero-banner { padding: 1.35rem !important; } .site-index .hero-banner h1 { font-size: 1.75rem; } }
+

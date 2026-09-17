@@ -34,16 +34,16 @@ $canCheckOut = in_array($role, ['admin', 'reception'], true);
 <div class="visit-index">
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
         <h1 class="h3 mb-0"><?= Html::encode($this->title) ?></h1>
-        <div class="d-flex flex-wrap gap-2">
-            <?php if ($canCreate): ?>
-                <?= Html::a('Create Visit', ['create'], ['class' => 'btn btn-success']) ?>
-            <?php endif; ?>
-        </div>
+        <?= Html::beginForm(['index'], 'get', ['class' => 'd-flex flex-wrap gap-2 align-items-center']) ?>
+            <?= Html::hiddenInput('branch', $selectedBranch) ?>
+            <?= Html::textInput('VisitSearch[visitor_name]', $searchModel->visitor_name, ['class' => 'form-control', 'placeholder' => 'Search visitor by name', 'aria-label' => 'Search visitor by name']) ?>
+            <?= Html::submitButton('Search Visit', ['class' => 'btn btn-primary']) ?>
+            <?= Html::a('Clear', ['index', 'branch' => $selectedBranch], ['class' => 'btn btn-outline-secondary']) ?>
+        <?= Html::endForm() ?>
     </div>
 
     <?= GridView::widget([
         'dataProvider' => $dataProvider,
-        'filterModel' => $searchModel,
         'tableOptions' => ['class' => 'table table-striped table-bordered table-hover align-middle'],
         'columns' => [
             ['class' => 'yii\grid\SerialColumn'],
@@ -57,6 +57,10 @@ $canCheckOut = in_array($role, ['admin', 'reception'], true);
                 'attribute' => 'visitor_phone',
                 'label' => 'Phone',
                 'value' => static fn (Visit $model): string => $model->visitor->phone_number ?? '—',
+            ],
+            [
+                'label' => 'Gender',
+                'value' => static fn (Visit $model): string => $model->visitor->gender ?? '—',
             ],
             [
                 'attribute' => 'host_username',
@@ -79,7 +83,7 @@ $canCheckOut = in_array($role, ['admin', 'reception'], true);
             ],
             'purpose',
             'from_location',
-            'visitor_pass_number',
+            'destination',
             [
                 'label' => 'Status',
                 'format' => 'raw',
