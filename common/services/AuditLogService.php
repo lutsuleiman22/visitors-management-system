@@ -11,13 +11,21 @@ final class AuditLogService
 {
     public static function logAction(string $action, string $description, ?int $userId = null): void
     {
-        $log = new AuditLog([
+        $attributes = [
             'user_id' => $userId ?? (Yii::$app->user->isGuest ? null : (int) Yii::$app->user->id),
             'action' => $action,
             'description' => $description,
             'created_at' => date('Y-m-d H:i:s'),
             'ip_address' => Yii::$app->request->userIP,
-        ]);
+        ];
+        $columns = AuditLog::getTableSchema()?->columns ?? [];
+        if (isset($columns['model'])) {
+            $attributes['model'] = null;
+        }
+        if (isset($columns['record_id'])) {
+            $attributes['record_id'] = null;
+        }
+        $log = new AuditLog($attributes);
         try {
             if (!$log->save()) {
                 Yii::error($log->getErrors(), __METHOD__);

@@ -76,6 +76,10 @@ $todayLabel = date('M j, Y');
     </div>
 </div>
 <?php $this->registerCss(<<<'CSS'
+.admin-dashboard { position: relative; isolation: isolate; }
+.admin-dashboard::before { background: url('/visitors-management-system/frontend/web/images/pbz%20images.png') center / min(42vw, 480px) no-repeat; content: ''; inset: 0; opacity: .08; pointer-events: none; position: absolute; z-index: 0; }.admin-dashboard > * { position: relative; z-index: 1; }
+CSS); ?>
+<?php $this->registerCss(<<<'CSS'
 .admin-dashboard { --dashboard-ink: #10233e; --dashboard-muted: #5b6f82; --dashboard-border: #dfe7ee; --dashboard-blue: #1a4c74; --dashboard-green: #008f8c; --dashboard-red: #b85c5c; --dashboard-yellow: #d4a94d; color: var(--dashboard-ink); }
 .dashboard-branch-bar { align-items: end; background: #fff; border: 1px solid #dfe7ee; display: flex; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; padding: 1rem 1.15rem; }.dashboard-branch-bar strong { color: #10233e; display: block; margin-top: .25rem; }.dashboard-branch-form { align-items: center; display: flex; gap: .5rem; min-width: min(100%, 390px); }.dashboard-branch-form .form-select { min-width: 240px; }.dashboard-branch-summary { background: #fff; border: 1px solid var(--dashboard-border); display: grid; gap: 1rem; grid-template-columns: repeat(3, 1fr); margin-bottom: 1rem; padding: 1rem 1.15rem; }.dashboard-branch-summary div { display: grid; gap: .2rem; }.dashboard-branch-summary span { color: var(--dashboard-muted); font-size: .75rem; text-transform: uppercase; }.dashboard-branch-summary strong { color: #10233e; font-size: 1.5rem; }.dashboard-branch-summary a { color: var(--dashboard-blue); text-decoration: none; }
 .dashboard-heading { align-items: flex-end; display: flex; justify-content: space-between; gap: 1rem; margin-bottom: 1.5rem; }

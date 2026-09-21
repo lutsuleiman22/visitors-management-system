@@ -26,6 +26,11 @@ $this->render('_head');
 </head>
 <body class="d-flex flex-column min-vh-100 backend-shell">
 <?php $this->beginBody() ?>
+<?php $this->registerCss(<<<'CSS'
+body.backend-shell { position: relative; }
+body.backend-shell::before { background: url('/visitors-management-system/frontend/web/images/pbz%20images.png') center / min(42vw, 520px) no-repeat; content: ''; inset: 0; opacity: .06; pointer-events: none; position: fixed; z-index: 0; }
+body.backend-shell > * { position: relative; z-index: 1; }
+CSS); ?>
 
 <?= $this->render('_header') ?>
 

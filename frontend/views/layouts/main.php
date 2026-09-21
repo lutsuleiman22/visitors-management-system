@@ -18,8 +18,13 @@ $this->render('_head');
     <?php $this->head() ?>
     <title><?= Html::encode($this->title) ?></title>
 </head>
-<body class="d-flex flex-column h-100">
+<body class="d-flex flex-column h-100 frontend-shell">
 <?php $this->beginBody() ?>
+<?php $this->registerCss(<<<'CSS'
+body.frontend-shell { position: relative; }
+body.frontend-shell::before { background: url('/visitors-management-system/frontend/web/images/pbz%20images.png') center / min(42vw, 520px) no-repeat; content: ''; inset: 0; opacity: .06; pointer-events: none; position: fixed; z-index: 0; }
+body.frontend-shell > * { position: relative; z-index: 1; }
+CSS); ?>
 
 <?= $this->render('_header') ?>
 

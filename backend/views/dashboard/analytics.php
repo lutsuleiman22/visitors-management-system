@@ -9,10 +9,16 @@ $this->title = 'Live Analytics';
 $this->params['breadcrumbs'][] = $this->title;
 $this->registerJsFile('https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js', ['position' => yii\web\View::POS_HEAD]);
 ?>
+<div class="dashboard-analytics-watermark">
 <div class="mb-3 d-flex flex-wrap gap-2">
     <?= Html::a('← Back', ['/admin/reports'], ['class' => 'btn btn-light border']) ?>
     <?= Html::a('🏠 Dashboard', ['/admin/dashboard'], ['class' => 'btn btn-warning']) ?>
 </div>
+ </div>
+<?php $this->registerCss(<<<'CSS'
+.dashboard-analytics-watermark { position: relative; isolation: isolate; }
+.dashboard-analytics-watermark::before { background: url('/visitors-management-system/frontend/web/images/pbz%20images.png') center / min(42vw, 480px) no-repeat; content: ''; inset: 0; opacity: .08; pointer-events: none; position: absolute; z-index: 0; }.dashboard-analytics-watermark > * { position: relative; z-index: 1; }
+CSS); ?>
 <h1 class="h3 mb-4">Analytics Dashboard</h1>
 <div class="row g-4">
     <div class="col-lg-6"><div class="card shadow-sm h-100"><div class="card-header bg-transparent"><h2 class="h5 mb-0">Visitors by branch</h2></div><div class="card-body"><canvas id="branch-chart"></canvas></div></div></div>

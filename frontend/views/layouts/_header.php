@@ -6,17 +6,27 @@ declare(strict_types=1);
 
 use yii\bootstrap5\Nav;
 use yii\bootstrap5\NavBar;
+use common\models\ReceptionShift;
 use yii\helpers\Html;
 
 $backendBaseUrl = str_replace('/frontend/web', '/backend/web', rtrim(Yii::$app->request->baseUrl, '/'));
-$activeShift = Yii::$app->session->get('reception_shift', []);
+$identity = Yii::$app->user->identity;
+$branch = (string) Yii::$app->session->get('pbz_branch', '');
+$activeShift = null;
+if ($identity !== null && $identity->isReception() && $branch !== '') {
+    try {
+        $activeShift = ReceptionShift::findOne([
+            'user_id' => (int) $identity->id,
+            'branch_code' => $branch,
+            'status' => ReceptionShift::STATUS_OPEN,
+        ]);
+    } catch (Throwable $exception) {
+        Yii::error($exception->getMessage(), __METHOD__);
+    }
+}
 $deskReady = !Yii::$app->user->isGuest
-    && Yii::$app->user->identity?->isReception() === true
-    && (string) Yii::$app->session->get('pbz_branch', '') !== ''
-    && is_array($activeShift)
-    && (int) ($activeShift['user_id'] ?? 0) === (int) Yii::$app->user->id
-    && (string) ($activeShift['branch'] ?? '') === (string) Yii::$app->session->get('pbz_branch', '')
-    && (string) ($activeShift['started_at'] ?? '') !== '';
+    && $identity?->isReception() === true
+    && $activeShift !== null;
 
 $items = [
     [
@@ -53,16 +63,13 @@ $items = [
 <header id="header">
     <?php NavBar::begin(
         [
-            'brandLabel' => Html::img(
-                Yii::getAlias('@web/images/pbz logo.png'),
-                [
-                    'alt' => 'PBZ Bank Visitor Management System',
-                    'class' => 'brand-logo',
-                    'height' => 42,
-                ],
-            ),
+            'brandLabel' => Html::tag('span', Html::img(Yii::getAlias('@web/images/pbz logo.png'), [
+                'alt' => 'PBZ Bank Visitor Management System',
+                'class' => 'brand-logo',
+                'height' => 42,
+            ]) . Html::tag('span', 'Visitor-Management-System', ['class' => 'frontend-brand-name']) . Html::tag('span', 'Visitor management', ['class' => 'frontend-brand-context']), ['class' => 'frontend-brand']),
             'brandUrl' => Yii::$app->homeUrl,
-            'options' => ['class' => 'navbar-expand-md navbar-dark bg-dark fixed-top'],
+            'options' => ['class' => 'navbar-expand-md navbar-light bg-white fixed-top frontend-topbar'],
         ],
     ) ?>
     <?= Nav::widget(
@@ -82,3 +89,16 @@ $items = [
     ) ?>
     <?php NavBar::end() ?>
 </header>
+<?php $this->registerCss(<<<'CSS'
+.frontend-topbar { border-bottom: 1px solid #dfe7ee; box-shadow: 0 2px 8px rgba(16,35,62,.06); min-height: 82px; }
+.frontend-topbar .container { align-items: center; }
+.frontend-brand { align-items: center; display: inline-flex; gap: .7rem; white-space: nowrap; }
+.frontend-brand-name { color: #10233e; font-size: 1rem; font-weight: 800; }
+.frontend-brand-context { border-left: 1px solid #dfe7ee; color: #6b7c8e; font-size: .78rem; padding-left: .7rem; }
+.frontend-topbar .navbar-nav { align-items: center; gap: .2rem; }
+.frontend-topbar .navbar-nav .nav-link { color: #53677c; font-weight: 600; padding: .55rem .7rem; }
+.frontend-topbar .navbar-nav .nav-link:hover, .frontend-topbar .navbar-nav .nav-link:focus { color: #0d6efd; }
+.frontend-topbar .navbar-nav .nav-link.logout { border: 1px solid #9aa9b7; border-radius: .35rem; margin-left: .3rem; padding: .45rem .7rem; }
+.frontend-topbar .navbar-toggler { border-color: #9aa9b7; }
+@media (max-width: 767.98px) { .frontend-brand-name, .frontend-brand-context { display: none; } .frontend-topbar .navbar-nav { align-items: stretch; padding-top: .5rem; } .frontend-topbar .navbar-nav .nav-link.logout { margin-left: 0; } }
+CSS); ?>

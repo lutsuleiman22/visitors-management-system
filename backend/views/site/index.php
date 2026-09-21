@@ -51,6 +51,10 @@ foreach ($recentVisits as $visit) {
     </div>
     <div class="card border-0 shadow-sm"><div class="card-header bg-transparent border-0 d-flex flex-wrap justify-content-between align-items-center gap-2 py-3"><div><h2 class="h5 mb-1">Recent activity</h2><p class="small text-body-secondary mb-0">Latest visitor entries and departures</p></div><?php if ($role === 'admin' || $role === 'reception'): ?><?= Html::a('View visitor list', ['/visit/index'], ['class' => 'btn btn-sm btn-outline-primary']) ?><?php endif; ?></div><div class="table-responsive"><table class="table table-striped table-hover align-middle mb-0"><thead><tr><th>Visitor</th><th>Purpose</th><th>Check-in time</th><th>Status</th></tr></thead><tbody><?php if ($recentVisits === []): ?><tr><td colspan="4" class="text-center text-body-secondary py-5">No recent visitor activity.</td></tr><?php else: foreach (array_slice($recentVisits, 0, 20) as $visit): ?><?php $status = $visit->isCheckedIn() ? 'Active' : ($visit->status === Visit::STATUS_CHECKED_OUT ? 'Checked out' : 'Pending'); $statusColor = $status === 'Active' ? 'success' : ($status === 'Checked out' ? 'primary' : 'warning'); ?><tr><td><strong><?= Html::encode($visit->visitor->full_name ?? 'Unknown visitor') ?></strong><small class="d-block text-body-secondary"><?= Html::encode($visit->visitor->phone_number ?? '') ?></small></td><td><?= Html::encode($visit->purpose ?: '—') ?></td><td><?= Html::encode($visit->check_in_time ?: '—') ?></td><td><span class="badge rounded-pill text-bg-<?= $statusColor ?>"><?= Html::encode($status) ?></span></td></tr><?php endforeach; endif; ?></tbody></table></div></div>
 </div>
+<?php $this->registerCss(<<<'CSS'
+.site-index { position: relative; isolation: isolate; }
+.site-index::before { background: url('/visitors-management-system/frontend/web/images/pbz%20images.png') center / min(42vw, 480px) no-repeat; content: ''; inset: 0; opacity: .08; pointer-events: none; position: absolute; z-index: 0; }.site-index > * { position: relative; z-index: 1; }
+CSS); ?>
 <?php
 $this->registerCss(<<<'CSS'
 .dashboard-stat-card { min-height: 154px; }

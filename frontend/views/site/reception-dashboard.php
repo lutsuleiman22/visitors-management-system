@@ -33,6 +33,10 @@ if (!$shiftStarted):
         </div>
     </div>
 </div>
+<?php $this->registerCss(<<<'CSS'
+.reception-dashboard { position: relative; isolation: isolate; }
+.reception-dashboard::before { background: url('/visitors-management-system/frontend/web/images/pbz%20images.png') center / min(42vw, 480px) no-repeat; content: ''; inset: 0; opacity: .08; pointer-events: none; position: absolute; z-index: 0; }.reception-dashboard > * { position: relative; z-index: 1; }
+CSS); ?>
 <?php return; endif;
 $totalVisitors = count($visits);
 $currentInside = count(array_filter($visits, static fn (Visit $visit): bool => $visit->isCheckedIn()));

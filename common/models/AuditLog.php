@@ -17,7 +17,7 @@ class AuditLog extends ActiveRecord
     {
         return [
             [['action', 'description', 'created_at'], 'required'],
-            [['user_id', 'record_id'], 'integer'],
+            [['user_id'], 'integer'],
             [['description'], 'string'],
             [['action', 'model'], 'string', 'max' => 80],
             [['ip_address'], 'string', 'max' => 45],
@@ -32,7 +32,6 @@ class AuditLog extends ActiveRecord
             'user_id' => 'User',
             'action' => 'Action',
             'model' => 'Model',
-            'record_id' => 'Record ID',
             'description' => 'Description',
             'ip_address' => 'IP Address',
             'created_at' => 'Created At',

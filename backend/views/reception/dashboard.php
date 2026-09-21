@@ -8,6 +8,7 @@ use yii\helpers\Html;
 $this->title = 'Reception Dashboard';
 $this->params['breadcrumbs'][] = $this->title;
 ?>
+<div class="backend-reception-dashboard">
 <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
     <div><div class="text-uppercase small fw-semibold text-success">Front desk</div><h1 class="h2 mb-1">Reception Dashboard</h1><p class="text-body-secondary mb-0">Register arrivals and keep today’s visitor flow moving.</p></div>
     <div class="d-flex gap-2 flex-wrap">
@@ -32,3 +33,8 @@ $this->params['breadcrumbs'][] = $this->title;
         'purpose', ['attribute' => 'status', 'format' => 'raw', 'value' => static function ($visit): string { $active = $visit->isCheckedIn(); return Html::tag('span', $active ? 'Checked-In' : 'Checked-Out', ['class' => 'badge text-bg-' . ($active ? 'success' : 'secondary')]); }], 'check_in_time', 'check_out_time',
     ],
 ]) ?>
+ </div>
+<?php $this->registerCss(<<<'CSS'
+.backend-reception-dashboard { position: relative; isolation: isolate; }
+.backend-reception-dashboard::before { background: url('/visitors-management-system/frontend/web/images/pbz%20images.png') center / min(42vw, 480px) no-repeat; content: ''; inset: 0; opacity: .08; pointer-events: none; position: absolute; z-index: 0; }.backend-reception-dashboard > * { position: relative; z-index: 1; }
+CSS); ?>

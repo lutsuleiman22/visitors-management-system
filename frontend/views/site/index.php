@@ -59,3 +59,8 @@ $this->params['meta_description'] = 'Self-service visitor check-in and check-out
         </div></div>
     <?php endif; ?>
 </div>
+<?php $this->registerCss(<<<'CSS'
+.site-index { position: relative; isolation: isolate; }
+.site-index::before { background: url('/visitors-management-system/frontend/web/images/pbz%20images.png') center / min(42vw, 480px) no-repeat; content: ''; inset: 0; opacity: .08; pointer-events: none; position: absolute; z-index: 0; }
+.site-index > * { position: relative; z-index: 1; }
+CSS); ?>
