@@ -29,6 +29,16 @@ final class ReportService
         if ($filter->to_date !== '') {
             $query->andWhere(['<=', 'v.check_in_time', $filter->to_date . ' 23:59:59']);
         }
+        if ($filter->branch !== '') {
+            $query->andWhere(['v.branch_code' => $filter->branch]);
+        }
+        if ($filter->reception_id !== '') {
+            $query->andWhere([
+                'or',
+                ['v.checked_in_by_user_id' => (int) $filter->reception_id],
+                ['v.checked_out_by_user_id' => (int) $filter->reception_id],
+            ]);
+        }
         if ($filter->role !== '') {
             $query->andWhere(['host.role' => $filter->role]);
         }

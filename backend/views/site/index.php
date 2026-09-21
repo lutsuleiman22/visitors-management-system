@@ -8,10 +8,8 @@ declare(strict_types=1);
 /** @var int $totalCheckedOut */
 /** @var common\models\Visit[] $recentVisits */
 
-use common\models\Notification;
 use common\models\Visit;
 use common\models\Visitor;
-use common\services\NotificationService;
 use yii\helpers\Html;
 use yii\helpers\Json;
 
@@ -21,11 +19,9 @@ $username = $identity?->username ?? 'operator';
 $role = strtolower((string) ($identity?->role ?? ''));
 $roleLabel = strtoupper($role ?: 'operator');
 $totalVisitors = 0;
-$unreadNotifications = 0;
 
 try {
     $totalVisitors = (int) Visitor::find()->count();
-    $unreadNotifications = NotificationService::unreadCount((int) Yii::$app->user->id);
 } catch (Throwable $exception) {
     Yii::error($exception->getMessage(), __METHOD__);
 }
@@ -45,7 +41,7 @@ foreach ($recentVisits as $visit) {
         <span class="badge rounded-pill text-bg-light border px-3 py-2"><?= Html::encode($roleLabel) ?> access</span>
     </div>
     <div class="row g-3 mb-4">
-        <?php foreach ([['Total Visitors', $totalVisitors, 'primary', 'Registered visitor records', 'V'], ['Active Visits', $currentlyInside, 'success', 'Checked in, not checked out', 'A'], ['Today Check-ins', $totalVisitsToday, 'info', 'Entries since midnight', 'T'], ['Unread Notifications', $unreadNotifications, 'warning', 'Requires your attention', 'N']] as [$label, $value, $color, $hint, $icon]): ?>
+        <?php foreach ([['Total Visitors', $totalVisitors, 'primary', 'Registered visitor records', 'V'], ['Active Visits', $currentlyInside, 'success', 'Checked in, not checked out', 'A'], ['Today Check-ins', $totalVisitsToday, 'info', 'Entries since midnight', 'T']] as [$label, $value, $color, $hint, $icon]): ?>
             <div class="col-6 col-xl-3"><div class="card dashboard-stat-card h-100 border-0 shadow-sm border-start border-4 border-<?= $color ?>"><div class="card-body p-3 p-lg-4"><div class="d-flex justify-content-between align-items-start gap-2"><span class="dashboard-stat-icon text-bg-<?= $color ?>"><?= Html::encode($icon) ?></span><span class="small text-uppercase fw-semibold text-body-secondary text-end"><?= Html::encode($label) ?></span></div><div class="display-6 fw-bold mt-3"><?= (int) $value ?></div><div class="small text-body-secondary"><?= Html::encode($hint) ?></div></div></div></div>
         <?php endforeach; ?>
     </div>

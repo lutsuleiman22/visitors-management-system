@@ -9,7 +9,6 @@ use common\components\AuditLogger;
 use common\models\LoginForm;
 use common\models\User;
 use common\services\AuditLogService;
-use common\services\NotificationService;
 use Yii;
 use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
@@ -102,7 +101,6 @@ class SiteController extends BaseController
 
             AuditLogService::logAction('login', 'User logged in successfully.');
             AuditLogger::log('LOGIN', 'User', Yii::$app->user->id, 'User logged in');
-            NotificationService::createNotification('New login: ' . Yii::$app->user->identity->username, 'info', (int) Yii::$app->user->id);
             return $this->redirect(['/admin/dashboard']);
         }
 

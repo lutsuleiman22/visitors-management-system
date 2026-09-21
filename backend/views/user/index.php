@@ -12,7 +12,7 @@ use yii\helpers\Html;
 $this->title = 'Users';
 $this->params['breadcrumbs'][] = $this->title;
 ?>
-<div class="d-flex justify-content-between align-items-center mb-3"><h1 class="h3 mb-0">Users</h1><div class="d-flex gap-2"><?= Html::a('Pending Approvals (' . count($pendingUsers) . ')', ['index', 'branch' => $selectedBranch, '#' => 'pending-approvals'], ['class' => 'btn btn-warning']) ?><?= Html::a('Create User', ['create'], ['class' => 'btn btn-success']) ?></div></div>
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3"><h1 class="h3 mb-0">Users</h1><div class="d-flex gap-2"><?= Html::a('Back to Dashboard', ['/admin/dashboard'], ['class' => 'btn btn-outline-secondary']) ?><?= Html::a('Pending Approvals (' . count($pendingUsers) . ')', ['index', 'branch' => $selectedBranch, '#' => 'pending-approvals'], ['class' => 'btn btn-warning']) ?><?= Html::a('Create User', ['create'], ['class' => 'btn btn-success']) ?></div></div>
 <div id="pending-approvals" class="card border-warning mb-4">
     <div class="card-header bg-warning-subtle"><strong>Reception approvals</strong><span class="ms-2 badge text-bg-warning"><?= count($pendingUsers) ?> pending</span></div>
     <div class="card-body p-0">
@@ -29,5 +29,5 @@ $this->params['breadcrumbs'][] = $this->title;
 </div>
 <?= GridView::widget([
     'dataProvider' => $dataProvider,
-    'columns' => ['username', 'email', ['attribute' => 'role', 'value' => static fn (User $model): string => User::roleList()[$model->role] ?? $model->role], ['attribute' => 'branch_code', 'label' => 'PBZ Branch', 'value' => static fn (User $model): string => $branches[$model->branch_code] ?? 'Unassigned'], ['attribute' => 'status', 'value' => static fn (User $model): string => $model->status === User::STATUS_ACTIVE ? 'Active' : 'Inactive'], ['class' => 'yii\grid\ActionColumn', 'template' => '{update} {delete}', 'buttons' => ['delete' => static fn ($url, User $model): string => Html::a('Deactivate', ['delete', 'id' => $model->id], ['class' => 'btn btn-sm btn-outline-danger', 'data' => ['method' => 'post', 'confirm' => 'Deactivate this user?']])]]],
+    'columns' => ['username', 'email', ['attribute' => 'role', 'value' => static fn (User $model): string => User::roleList()[$model->role] ?? $model->role], ['attribute' => 'branch_code', 'label' => 'PBZ Branch', 'value' => static fn (User $model): string => $branches[$model->branch_code] ?? 'Unassigned'], ['attribute' => 'status', 'value' => static fn (User $model): string => $model->status === User::STATUS_ACTIVE ? 'Active' : 'Inactive'], ['class' => 'yii\grid\ActionColumn', 'template' => '{update} {toggle-status}', 'buttons' => ['toggle-status' => static function ($url, User $model): string { $active = $model->status === User::STATUS_ACTIVE; return Html::a($active ? 'Deactivate' : 'Activate', ['toggle-status', 'id' => $model->id], ['class' => 'btn btn-sm btn-outline-' . ($active ? 'danger' : 'success'), 'data' => ['method' => 'post', 'confirm' => ($active ? 'Deactivate' : 'Activate') . ' this user?']]); }]]],
 ]) ?>

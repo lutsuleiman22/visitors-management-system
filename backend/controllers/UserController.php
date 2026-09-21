@@ -20,7 +20,7 @@ class UserController extends BaseController
     public function behaviors(): array
     {
         return array_merge(parent::behaviors(), [
-            'verbs' => ['class' => VerbFilter::class, 'actions' => ['delete' => ['POST'], 'approve' => ['POST']]],
+                'verbs' => ['class' => VerbFilter::class, 'actions' => ['delete' => ['POST'], 'toggle-status' => ['POST'], 'approve' => ['POST']]],
         ]);
     }
 
@@ -118,21 +118,30 @@ class UserController extends BaseController
 
     public function actionDelete(int $id): Response
     {
+        return $this->actionToggleStatus($id);
+    }
+
+    public function actionToggleStatus(int $id): Response
+    {
         $this->requireRole(User::ROLE_ADMIN);
         if ((int) Yii::$app->user->id === $id) {
-            Yii::$app->session->setFlash('error', 'You cannot delete your own account.');
+            Yii::$app->session->setFlash('error', 'You cannot change your own account status.');
             return $this->redirect(['index']);
         }
         try {
-            $this->findModel($id)->updateAttributes(['status' => User::STATUS_DELETED]);
+            $user = $this->findModel($id);
+            $newStatus = $user->status === User::STATUS_ACTIVE ? User::STATUS_DELETED : User::STATUS_ACTIVE;
+            $user->updateAttributes(['status' => $newStatus]);
         } catch (\Throwable $exception) {
             Yii::error($exception->getMessage(), __METHOD__);
-            Yii::$app->session->setFlash('error', 'Unable to deactivate user at this time.');
+            Yii::$app->session->setFlash('error', 'Unable to change user status at this time.');
             return $this->redirect(['index']);
         }
-        AuditLogService::logAction('delete-user', 'User #' . $id . ' deactivated.');
-        Yii::$app->session->setFlash('success', 'User deactivated.');
-        return $this->redirect(['index']);
+        $action = $newStatus === User::STATUS_ACTIVE ? 'activate-user' : 'deactivate-user';
+        $label = $newStatus === User::STATUS_ACTIVE ? 'activated' : 'deactivated';
+        AuditLogService::logAction($action, 'User #' . $id . ' ' . $label . '.');
+        Yii::$app->session->setFlash('success', 'User ' . $label . '.');
+        return $this->redirect(['index', 'branch' => $user->branch_code]);
     }
 
     /** @throws NotFoundHttpException */

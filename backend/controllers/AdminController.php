@@ -8,7 +8,7 @@ use backend\components\BaseController;
 use common\models\AuditLog;
 use common\models\Branch;
 use common\models\Department;
-use common\models\Notification;
+use common\models\ReceptionShift;
 use common\models\User;
 use common\models\Visit;
 use common\models\Visitor;
@@ -257,6 +257,15 @@ class AdminController extends BaseController
         return $this->render('reports');
     }
 
+    public function actionShifts(): string
+    {
+        $this->requireRole(User::ROLE_ADMIN);
+
+        return $this->render('shifts', [
+            'shifts' => ReceptionShift::find()->with('user')->orderBy(['started_at' => SORT_DESC, 'id' => SORT_DESC])->all(),
+        ]);
+    }
+
     public function actionDaily(): string
     {
         return $this->renderTimeReport('daily', 'Daily Reports', 'daily');
@@ -453,7 +462,11 @@ class AdminController extends BaseController
             ->orderBy(['created_at' => SORT_DESC])
             ->all();
 
-        $receptions = User::find()->where(['role' => User::ROLE_RECEPTION, 'status' => User::STATUS_ACTIVE])->orderBy(['username' => SORT_ASC])->all();
+        $receptionQuery = User::find()->where(['role' => User::ROLE_RECEPTION, 'status' => User::STATUS_ACTIVE]);
+        if ($branch !== '' && array_key_exists($branch, $branches)) {
+            $receptionQuery->andWhere(['branch_code' => $branch]);
+        }
+        $receptions = $receptionQuery->orderBy(['username' => SORT_ASC])->all();
         return [$visits, $startDate, $endDate, $filterType, $filterValue, ['branches' => $branches, 'departments' => $departments, 'receptions' => $receptions, 'branch' => $branch, 'department' => $department, 'receptionId' => $receptionId]];
     }
 

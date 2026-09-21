@@ -8,6 +8,7 @@ use backend\components\BaseController;
 use backend\models\ReportFilter;
 use backend\services\ReportService;
 use common\models\User;
+use common\services\BranchCatalog;
 use Yii;
 use yii\web\Response;
 use yii\web\ServerErrorHttpException;
@@ -19,7 +20,12 @@ class ReportController extends BaseController
         $this->requireRole(User::ROLE_ADMIN);
         $filter = new ReportFilter();
         $filter->load(Yii::$app->request->get());
-        return $this->render('index', ['model' => $filter]);
+        return $this->render('index', [
+            'model' => $filter,
+            'branches' => BranchCatalog::all(),
+            'receptions' => $this->receptionsForBranch($filter->branch),
+            'receptionsByBranch' => $this->receptionsByBranch(),
+        ]);
     }
 
     public function actionPdf(): Response
@@ -84,5 +90,28 @@ class ReportController extends BaseController
         $filter->load(Yii::$app->request->get());
         $filter->validate();
         return $filter;
+    }
+
+    /** @return array<int, User> */
+    private function receptionsForBranch(string $branch): array
+    {
+        $query = User::find()->where(['role' => User::ROLE_RECEPTION, 'status' => User::STATUS_ACTIVE]);
+        if ($branch !== '' && array_key_exists($branch, BranchCatalog::all())) {
+            $query->andWhere(['branch_code' => $branch]);
+        }
+        return $query->orderBy(['username' => SORT_ASC])->all();
+    }
+
+    /** @return array<string, array<int, array{id: int, username: string}>> */
+    private function receptionsByBranch(): array
+    {
+        $result = [];
+        foreach (User::find()->where(['role' => User::ROLE_RECEPTION, 'status' => User::STATUS_ACTIVE])->orderBy(['username' => SORT_ASC])->asArray()->all() as $reception) {
+            $result[(string) $reception['branch_code']][] = [
+                'id' => (int) $reception['id'],
+                'username' => (string) $reception['username'],
+            ];
+        }
+        return $result;
     }
 }

@@ -13,11 +13,13 @@ class ReportFilter extends Model
     public string $to_date = '';
     public string $role = '';
     public string $status = '';
+    public string $branch = '';
+    public string $reception_id = '';
 
     public function rules(): array
     {
         return [
-            [['from_date', 'to_date', 'role', 'status'], 'safe'],
+            [['from_date', 'to_date', 'role', 'status', 'branch', 'reception_id'], 'safe'],
             [['from_date', 'to_date'], 'date', 'format' => 'php:Y-m-d'],
             [['role'], 'in', 'range' => array_keys(User::roleList())],
             [['status'], 'in', 'range' => ['inside', 'out', 'pending']],

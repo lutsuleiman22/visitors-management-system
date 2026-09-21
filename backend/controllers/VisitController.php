@@ -12,7 +12,6 @@ use common\models\Visit;
 use common\models\Visitor;
 use common\services\AuditLogService;
 use common\services\BranchCatalog;
-use common\services\NotificationService;
 use Yii;
 use yii\data\ArrayDataProvider;
 use yii\data\ActiveDataProvider;
@@ -135,7 +134,6 @@ class VisitController extends BaseController
             if ($model->load(Yii::$app->request->post()) && $model->save()) {
                 AuditLogService::logAction('create-visit', 'Visit #' . $model->id . ' created.');
                 AuditLogger::log('CREATE', 'Visit', $model->id, 'Visitor checked in');
-                NotificationService::createNotification('New visit recorded.', 'info');
                 Yii::$app->session->setFlash('success', 'Visit created successfully.');
                 return $this->redirect(['view', 'id' => $model->id]);
             }
@@ -216,12 +214,15 @@ class VisitController extends BaseController
         $model = $this->findModel($id);
 
         try {
-            if (!$model->isCheckedIn()) {
+            $isToday = $model->check_in_time !== null
+                && date('Y-m-d') === date('Y-m-d', strtotime((string) $model->check_in_time));
+            if (!$isToday) {
+                Yii::$app->session->setFlash('warning', 'This visitor checked in on a previous day and cannot be checked out now.');
+            } elseif (!$model->isCheckedIn()) {
                 Yii::$app->session->setFlash('warning', 'This visit has already been checked out.');
             } elseif ($model->checkOut(Yii::$app->user->isGuest ? null : (int) Yii::$app->user->id)) {
                 AuditLogService::logAction('check-out', 'Visitor checked out from visit #' . $model->id);
                 AuditLogger::log('CHECKOUT', 'Visit', $model->id, 'Visitor checked out');
-                NotificationService::createNotification('Visitor checked out: ' . ($model->visitor->full_name ?? 'Unknown'), 'success');
                 Yii::$app->session->setFlash('success', 'Visitor checked out successfully.');
             } else {
                 Yii::$app->session->setFlash('error', 'Unable to check out this visitor.');

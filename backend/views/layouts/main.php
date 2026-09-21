@@ -44,18 +44,16 @@ $this->render('_head');
                 <a class="sidebar-link" href="<?= Html::encode(Yii::$app->urlManager->createUrl(['/admin/reports'])) ?>"><span class="sidebar-icon">R</span><span class="menu-text">Reports</span></a>
                 <a class="sidebar-link" href="<?= Html::encode(Yii::$app->urlManager->createUrl(['/dashboard/analytics'])) ?>"><span class="sidebar-icon">A</span><span class="menu-text">Analytics</span></a>
                 <a class="sidebar-link" href="<?= Html::encode(Yii::$app->urlManager->createUrl(['/visit/index'])) ?>"><span class="sidebar-icon">V</span><span class="menu-text">Visitors</span></a>
-                <a class="sidebar-link" href="<?= Html::encode(Yii::$app->urlManager->createUrl(['/notification/index'])) ?>"><span class="sidebar-icon">N</span><span class="menu-text">Notifications</span></a>
                 <a class="sidebar-link" href="<?= Html::encode(Yii::$app->urlManager->createUrl(['/audit-log/index'])) ?>"><span class="sidebar-icon">A</span><span class="menu-text">Audit Logs</span></a>
+                <a class="sidebar-link" href="<?= Html::encode(Yii::$app->urlManager->createUrl(['/admin/shifts'])) ?>"><span class="sidebar-icon">S</span><span class="menu-text">Shift Registration</span></a>
             <?php elseif ($isReception): ?>
                 <a class="sidebar-link" href="<?= Html::encode(Yii::$app->urlManager->createUrl(['/reception/dashboard'])) ?>"><span class="sidebar-icon">D</span><span class="menu-text">Dashboard</span></a>
                 <a class="sidebar-link" href="<?= Html::encode(Yii::$app->urlManager->createUrl(['/visit/create'])) ?>"><span class="sidebar-icon">+</span><span class="menu-text">Add Visitor</span></a>
                 <a class="sidebar-link" href="<?= Html::encode(Yii::$app->urlManager->createUrl(['/visit/index'])) ?>"><span class="sidebar-icon">V</span><span class="menu-text">Visitor List</span></a>
                 <a class="sidebar-link" href="<?= Html::encode(Yii::$app->urlManager->createUrl(['/visit/index'])) ?>"><span class="sidebar-icon">C</span><span class="menu-text">Check-in / Check-out</span></a>
-                <a class="sidebar-link" href="<?= Html::encode(Yii::$app->urlManager->createUrl(['/notification/index'])) ?>"><span class="sidebar-icon">N</span><span class="menu-text">Notifications</span></a>
             <?php elseif ($isSecurity): ?>
                 <a class="sidebar-link" href="<?= Html::encode(Yii::$app->urlManager->createUrl(['/security/dashboard'])) ?>"><span class="sidebar-icon">D</span><span class="menu-text">Dashboard</span></a>
                 <a class="sidebar-link" href="<?= Html::encode(Yii::$app->urlManager->createUrl(['/visit/evacuation'])) ?>"><span class="sidebar-icon">A</span><span class="menu-text">Active Visitors</span></a>
-                <a class="sidebar-link" href="<?= Html::encode(Yii::$app->urlManager->createUrl(['/notification/index'])) ?>"><span class="sidebar-icon">M</span><span class="menu-text">Monitoring</span></a>
             <?php endif; ?>
         </nav>
         <?php if (!Yii::$app->user->isGuest): ?>

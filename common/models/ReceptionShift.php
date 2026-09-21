@@ -6,6 +6,7 @@ namespace common\models;
 
 use yii\behaviors\TimestampBehavior;
 use yii\db\ActiveRecord;
+use yii\db\ActiveQuery;
 
 class ReceptionShift extends ActiveRecord
 {
@@ -31,5 +32,10 @@ class ReceptionShift extends ActiveRecord
             [['user_id', 'branch_code', 'started_at'], 'required'],
             [['status'], 'default', 'value' => self::STATUS_OPEN],
         ];
+    }
+
+    public function getUser(): ActiveQuery
+    {
+        return $this->hasOne(User::class, ['id' => 'user_id']);
     }
 }

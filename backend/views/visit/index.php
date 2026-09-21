@@ -30,16 +30,20 @@ $canCreate = in_array($role, ['admin', 'reception'], true);
 $canUpdate = $role === 'admin';
 $canDelete = $role === 'admin';
 $canCheckOut = in_array($role, ['admin', 'reception'], true);
+$frontendBaseUrl = str_replace('/backend/web', '/frontend/web', rtrim(Yii::$app->request->baseUrl, '/'));
 ?>
 <div class="visit-index">
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
         <h1 class="h3 mb-0"><?= Html::encode($this->title) ?></h1>
+        <div class="d-flex flex-wrap gap-2 align-items-center">
+        <?= Html::a('Back to Dashboard', ['/admin/dashboard'], ['class' => 'btn btn-outline-secondary']) ?>
         <?= Html::beginForm(['index'], 'get', ['class' => 'd-flex flex-wrap gap-2 align-items-center']) ?>
             <?= Html::hiddenInput('branch', $selectedBranch) ?>
             <?= Html::textInput('VisitSearch[visitor_name]', $searchModel->visitor_name, ['class' => 'form-control', 'placeholder' => 'Search visitor by name', 'aria-label' => 'Search visitor by name']) ?>
             <?= Html::submitButton('Search Visit', ['class' => 'btn btn-primary']) ?>
             <?= Html::a('Clear', ['index', 'branch' => $selectedBranch], ['class' => 'btn btn-outline-secondary']) ?>
         <?= Html::endForm() ?>
+        </div>
     </div>
 
     <?= GridView::widget([
@@ -103,6 +107,17 @@ $canCheckOut = in_array($role, ['admin', 'reception'], true);
             ],
             'check_in_time',
             [
+                'label' => 'Signature',
+                'format' => 'raw',
+                'value' => static function (Visit $model) use ($frontendBaseUrl): string {
+                    if (!$model->signature_path) {
+                        return '—';
+                    }
+                    $url = $frontendBaseUrl . '/' . ltrim((string) $model->signature_path, '/');
+                    return Html::a(Html::img($url, ['alt' => 'Visitor signature', 'style' => 'max-width: 120px; max-height: 55px; border: 1px solid #dce6eb; padding: 3px; background: #fff;']), $url, ['target' => '_blank', 'rel' => 'noopener']);
+                },
+            ],
+            [
                 'label' => 'Checked Out By',
                 'value' => static fn (Visit $model): string => $model->checkedOutBy?->username ?? ($model->check_out_time ? 'Unknown / legacy' : '—'),
             ],
@@ -125,7 +140,8 @@ $canCheckOut = in_array($role, ['admin', 'reception'], true);
                 'template' => '{view}' . ($canUpdate ? ' {update}' : '') . ($canCheckOut ? ' {check-out}' : '') . ($canDelete ? ' {delete}' : ''),
                 'buttons' => [
                     'check-out' => static function (string $url, Visit $model): string {
-                        if (!$model->isCheckedIn()) {
+                        $isToday = $model->check_in_time !== null && date('Y-m-d') === date('Y-m-d', strtotime((string) $model->check_in_time));
+                        if (!$model->isCheckedIn() || !$isToday) {
                             return '';
                         }
                         return Html::a('Check-Out', ['check-out', 'id' => $model->id], [

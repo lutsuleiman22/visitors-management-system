@@ -7,6 +7,7 @@ namespace frontend\controllers;
 use common\models\LoginForm;
 use common\models\ReceptionShift;
 use common\models\User;
+use common\services\AuditLogService;
 use frontend\models\ContactForm;
 use frontend\models\ReceptionSignupForm;
 use common\services\BranchCatalog;
@@ -296,6 +297,7 @@ class SiteController extends Controller
             }
         }
         Yii::$app->session->set('reception_shift', $this->shiftSessionData($activeShift));
+        AuditLogService::logAction('start-shift', 'Reception shift started for branch ' . $branch . '.');
         Yii::$app->session->setFlash('success', 'Shift started for ' . (BranchCatalog::all()[$branch] ?? $branch) . '.');
 
         return $this->redirect(['reception-dashboard']);
@@ -318,6 +320,7 @@ class SiteController extends Controller
             $shift->status = ReceptionShift::STATUS_CLOSED;
             $shift->stopped_at = date('Y-m-d H:i:s');
             $shift->save(false);
+            AuditLogService::logAction('close-shift', 'Reception shift closed for branch ' . $branch . '.');
             Yii::$app->session->set('reception_last_shift', [
                 'branch' => $branch,
                 'started_at' => (string) $shift->started_at,
