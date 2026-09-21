@@ -20,7 +20,7 @@ return [
         ],
         'user' => [
             'identityClass' => \common\models\User::class,
-            'enableAutoLogin' => true,
+            'enableAutoLogin' => false,
             'identityCookie' => ['name' => '_identity-frontend', 'httpOnly' => true],
         ],
         'session' => [

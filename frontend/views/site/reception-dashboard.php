@@ -41,6 +41,7 @@ CSS); ?>
 $totalVisitors = count($visits);
 $currentInside = count(array_filter($visits, static fn (Visit $visit): bool => $visit->isCheckedIn()));
 $totalCheckedOut = count(array_filter($visits, static fn (Visit $visit): bool => !$visit->isCheckedIn()));
+$backendBaseUrl = str_replace('/frontend/web', '/backend/web', rtrim(Yii::$app->request->baseUrl, '/'));
 ?>
 <div class="reception-dashboard">
     <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
@@ -54,6 +55,7 @@ $totalCheckedOut = count(array_filter($visits, static fn (Visit $visit): bool =>
         <div class="d-flex gap-2 flex-wrap">
             <?= Html::a('Check-In Visitor', ['/visitor/check-in'], ['class' => 'btn btn-success']) ?>
             <?= Html::a('Check-Out Visitor', ['/visitor/checkout-page'], ['class' => 'btn btn-primary']) ?>
+            <?= Html::a('Admin Panel', $backendBaseUrl . '/index.php/site/login', ['class' => 'btn btn-warning']) ?>
             <?= Html::beginForm(['/site/close-shift'], 'post', ['class' => 'd-inline']) ?>
                 <?= Html::submitButton('Close Shift', ['class' => 'btn btn-outline-danger', 'data-confirm' => 'Close the current reception shift?']) ?>
             <?= Html::endForm() ?>

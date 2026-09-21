@@ -23,6 +23,7 @@ use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
 use yii\mail\MailerInterface;
 use yii\web\BadRequestHttpException;
+use yii\web\Cookie;
 use yii\web\Controller;
 use yii\web\ErrorAction;
 use yii\web\Response;
@@ -78,7 +79,7 @@ class SiteController extends Controller
             'verbs' => [
                 'class' => VerbFilter::class,
                 'actions' => [
-                    'logout' => ['post'],
+                    'logout' => ['GET', 'POST'],
                     'change-branch' => ['post'],
                     'start-shift' => ['post'],
                     'close-shift' => ['post'],
@@ -158,45 +159,25 @@ class SiteController extends Controller
             if ($pendingUser !== null && $pendingUser->role === User::ROLE_RECEPTION && $pendingUser->status === User::STATUS_INACTIVE) {
                 $model->addError('username', 'Your reception account is waiting for Admin approval.');
             } elseif ($model->login()) {
-                $selectedBranch = (string) Yii::$app->session->get('pbz_branch', '');
                 if (!Yii::$app->user->identity instanceof User || !Yii::$app->user->identity->isReception()) {
                     Yii::$app->user->logout();
                     $model->addError('username', 'Only reception accounts can access the frontend desk.');
-                } elseif ($selectedBranch === '') {
+                } else {
                     $selectedBranch = (string) Yii::$app->user->identity->branch_code;
+                    Yii::$app->session->set('pbz_branch', $selectedBranch);
                     $activeShift = ReceptionShift::findOne([
                         'branch_code' => $selectedBranch,
                         'status' => ReceptionShift::STATUS_OPEN,
                     ]);
                     if ($activeShift !== null && (int) $activeShift->user_id !== (int) Yii::$app->user->id) {
-                        Yii::$app->user->logout();
+                        Yii::$app->user->logout(true);
                         $model->addError('username', 'Another reception user has an active shift at this branch. That shift must be closed first.');
                     } else {
-                        Yii::$app->session->set('pbz_branch', $selectedBranch);
-                    }
-                    if ($activeShift !== null && (int) $activeShift->user_id === (int) Yii::$app->user->id) {
-                        Yii::$app->session->set('reception_shift', $this->shiftSessionData($activeShift));
+                        if ($activeShift !== null) {
+                            Yii::$app->session->set('reception_shift', $this->shiftSessionData($activeShift));
+                        }
                         return $this->redirect(['/site/reception-dashboard']);
                     }
-                    if ($model->hasErrors()) {
-                        // Keep the login form visible with the branch lock message.
-                    } else {
-                        return $this->redirect(['/site/reception-dashboard']);
-                    }
-                } elseif (Yii::$app->user->identity->branch_code !== $selectedBranch) {
-                    Yii::$app->user->logout();
-                    $model->addError('username', 'This account belongs to another PBZ branch. Use Change Branch first.');
-                } elseif (($activeShift = ReceptionShift::findOne([
-                    'branch_code' => $selectedBranch,
-                    'status' => ReceptionShift::STATUS_OPEN,
-                ])) !== null && (int) $activeShift->user_id !== (int) Yii::$app->user->id) {
-                    Yii::$app->user->logout();
-                    $model->addError('username', 'Another reception user has an active shift at this branch. That shift must be closed first.');
-                } else {
-                    if ($activeShift !== null) {
-                        Yii::$app->session->set('reception_shift', $this->shiftSessionData($activeShift));
-                    }
-                    return $this->redirect(['/site/reception-dashboard']);
                 }
             }
         }
@@ -342,14 +323,14 @@ class SiteController extends Controller
      */
     public function actionLogout(): Response
     {
-        $selectedBranch = (string) Yii::$app->session->get('pbz_branch', '');
-        Yii::$app->user->logout();
-        if ($selectedBranch !== '' && array_key_exists($selectedBranch, BranchCatalog::all())) {
-            Yii::$app->session->set('pbz_branch', $selectedBranch);
-        }
-        Yii::$app->session->setFlash('success', 'You have been signed out. Sign in again to continue at your selected branch.');
+        Yii::$app->user->logout(true);
+        Yii::$app->response->cookies->remove(new Cookie([
+            'name' => '_identity-frontend',
+            'path' => '/',
+        ]));
+        Yii::$app->session->destroy();
 
-        return $this->goHome();
+        return $this->redirect(['/site/login']);
     }
 
     public function actionChangeBranch(): Response
@@ -360,7 +341,7 @@ class SiteController extends Controller
             return $this->redirect(['reception-dashboard']);
         }
 
-        Yii::$app->user->logout();
+        Yii::$app->user->logout(true);
         Yii::$app->session->remove('pbz_branch');
         Yii::$app->session->remove('visitor_checkin_data');
         Yii::$app->session->remove('visitor_checkout_data');
