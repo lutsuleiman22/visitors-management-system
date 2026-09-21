@@ -36,10 +36,9 @@ $this->params['meta_description'] = 'Self-service visitor check-in and check-out
         <div class="card border-0 shadow-sm rounded-4"><div class="card-body p-4 p-lg-5">
             <span class="text-uppercase small fw-semibold text-primary">Step 2</span>
             <h2 class="h3 mt-2"><?= Html::encode($branches[$selectedBranch]) ?></h2>
-            <p class="text-body-secondary">Reception must sign in or create a reception account before visitor operations are available.</p>
+            <p class="text-body-secondary">Reception must sign in before visitor operations are available.</p>
             <div class="d-flex gap-2 flex-wrap">
                 <?= Html::a('Reception Sign In', ['/site/login'], ['class' => 'btn btn-primary btn-lg']) ?>
-                <?= Html::a('Create Reception Account', ['/site/reception-signup'], ['class' => 'btn btn-outline-primary btn-lg']) ?>
                 <?= Html::beginForm(['/site/change-branch'], 'post', ['class' => 'd-inline']) ?>
                     <?= Html::submitButton('Change Branch', ['class' => 'btn btn-outline-secondary btn-lg']) ?>
                 <?= Html::endForm() ?>
