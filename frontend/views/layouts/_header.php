@@ -9,9 +9,14 @@ use yii\bootstrap5\NavBar;
 use yii\helpers\Html;
 
 $backendBaseUrl = str_replace('/frontend/web', '/backend/web', rtrim(Yii::$app->request->baseUrl, '/'));
+$activeShift = Yii::$app->session->get('reception_shift', []);
 $deskReady = !Yii::$app->user->isGuest
     && Yii::$app->user->identity?->isReception() === true
-    && (string) Yii::$app->session->get('pbz_branch', '') !== '';
+    && (string) Yii::$app->session->get('pbz_branch', '') !== ''
+    && is_array($activeShift)
+    && (int) ($activeShift['user_id'] ?? 0) === (int) Yii::$app->user->id
+    && (string) ($activeShift['branch'] ?? '') === (string) Yii::$app->session->get('pbz_branch', '')
+    && (string) ($activeShift['started_at'] ?? '') !== '';
 
 $items = [
     [
@@ -48,9 +53,16 @@ $items = [
 <header id="header">
     <?php NavBar::begin(
         [
-            'brandLabel' => 'Visitor Management System',
+            'brandLabel' => Html::img(
+                Yii::getAlias('@web/images/pbz logo.png'),
+                [
+                    'alt' => 'PBZ Bank Visitor Management System',
+                    'class' => 'brand-logo',
+                    'height' => 42,
+                ],
+            ),
             'brandUrl' => Yii::$app->homeUrl,
-            'options' => ['class' => 'navbar-expand-md navbar-dark bg-dark fixed-top']
+            'options' => ['class' => 'navbar-expand-md navbar-dark bg-dark fixed-top'],
         ],
     ) ?>
     <?= Nav::widget(

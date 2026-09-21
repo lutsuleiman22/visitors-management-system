@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace frontend\controllers;
 
 use common\models\Visit;
+use common\models\ReceptionShift;
 use common\models\User;
 use common\services\AuditLogService;
 use common\services\NotificationService;
@@ -41,11 +42,21 @@ class VisitorController extends Controller
                 'rules' => [[
                     'allow' => true,
                     'roles' => ['@'],
-                    'matchCallback' => static fn (): bool => Yii::$app->user->identity?->isReception() === true
-                        && (string) Yii::$app->session->get('pbz_branch', '') !== '',
+                    'matchCallback' => static function (): bool {
+                        $identity = Yii::$app->user->identity;
+                        $branch = (string) Yii::$app->session->get('pbz_branch', '');
+                        $shift = ReceptionShift::findOne([
+                            'branch_code' => $branch,
+                            'status' => ReceptionShift::STATUS_OPEN,
+                        ]);
+                        return $identity?->isReception() === true
+                            && $branch !== ''
+                            && $shift !== null
+                            && (int) $shift->user_id === (int) $identity->id;
+                    },
                 ]],
                 'denyCallback' => static function (): Response {
-                    Yii::$app->session->setFlash('error', 'Select a PBZ branch and sign in with a reception account first.');
+                    Yii::$app->session->setFlash('error', 'Start your reception shift before managing visitors.');
                     return Yii::$app->response->redirect(['/site/index']);
                 },
             ],
@@ -210,7 +221,7 @@ class VisitorController extends Controller
         $visits = Visit::find()
             ->alias('v')
             ->joinWith(['visitor visitor'])
-            ->where(['v.status' => Visit::STATUS_CHECKED_IN, 'v.check_out_time' => null])
+            ->where($this->todayActiveVisitConditions('v'))
             ->andWhere([
                 'or',
                 ['like', 'LOWER(visitor.full_name)', '%' . mb_strtolower($term) . '%', false],
@@ -233,17 +244,10 @@ class VisitorController extends Controller
 
     public function actionDoCheckout(int $id): Response
     {
-        $todayStart = date('Y-m-d 00:00:00');
-        $tomorrowStart = date('Y-m-d 00:00:00', strtotime('+1 day'));
         $visit = Visit::find()
             ->with(['visitor', 'host'])
-            ->where([
-                'id' => $id,
-                'status' => Visit::STATUS_CHECKED_IN,
-                'check_out_time' => null,
-            ])
-            ->andWhere(['>=', 'check_in_time', $todayStart])
-            ->andWhere(['<', 'check_in_time', $tomorrowStart])
+            ->where(['id' => $id])
+            ->andWhere($this->todayActiveVisitConditions())
             ->one();
 
         if ($visit !== null && $visit->checkOut(Yii::$app->user->isGuest ? null : (int) Yii::$app->user->id)) {
@@ -265,7 +269,8 @@ class VisitorController extends Controller
 
         return Visit::find()
             ->with(['visitor', 'host'])
-            ->where(['id' => $visitId, 'status' => Visit::STATUS_CHECKED_IN, 'check_out_time' => null])
+            ->where(['id' => $visitId])
+            ->andWhere($this->todayActiveVisitConditions())
             ->one();
     }
 
@@ -278,7 +283,7 @@ class VisitorController extends Controller
 
         $visits = Visit::find()
             ->with(['visitor', 'host'])
-            ->where(['status' => Visit::STATUS_CHECKED_IN, 'check_out_time' => null])
+            ->where($this->todayActiveVisitConditions())
             ->orderBy(['check_in_time' => SORT_DESC])
             ->all();
 
@@ -290,6 +295,23 @@ class VisitorController extends Controller
         }
 
         return null;
+    }
+
+    /** @return array<int|string, mixed> */
+    private function todayActiveVisitConditions(string $alias = ''): array
+    {
+        $prefix = $alias !== '' ? $alias . '.' : '';
+        $todayStart = date('Y-m-d 00:00:00');
+        $tomorrowStart = date('Y-m-d 00:00:00', strtotime('+1 day'));
+
+        return [
+            'and',
+            [$prefix . 'status' => Visit::STATUS_CHECKED_IN],
+            [$prefix . 'check_out_time' => null],
+            [$prefix . 'branch_code' => (string) Yii::$app->session->get('pbz_branch', '')],
+            ['>=', $prefix . 'check_in_time', $todayStart],
+            ['<', $prefix . 'check_in_time', $tomorrowStart],
+        ];
     }
 
     /**

@@ -35,6 +35,7 @@ $stepName = $step ?? 'form';
                         <p class="mb-3">Pass number: <strong><?= Html::encode((string) ($visit->visitor_pass_number ?? '')) ?></strong></p>
                     </div>
                     <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center">
+                        <?= Html::a('Back to Reception Dashboard', ['/site/reception-dashboard'], ['class' => 'btn btn-outline-primary']) ?>
                         <?= Html::a('New Check-In', ['check-in'], ['class' => 'btn btn-outline-secondary']) ?>
                     </div>
                 <?php elseif ($stepName === 'preview'): ?>
@@ -60,6 +61,7 @@ $stepName = $step ?? 'form';
                     </datalist>
                     <?= Html::hiddenInput('CheckInForm[signature_data]', $model->signature_data, ['id' => 'signature-data']) ?>
                     <div class="visitor-check-in-actions">
+                        <?= Html::a('Back to Reception Dashboard', ['/site/reception-dashboard'], ['class' => 'btn btn-link']) ?>
                         <?= Html::submitButton('Update Preview', ['class' => 'btn btn-outline-secondary', 'name' => 'update_preview', 'value' => '1']) ?>
                         <?= Html::submitButton('Confirm & Save', ['class' => 'btn btn-checkin btn-lg px-4', 'id' => 'confirm-save-checkin', 'name' => 'confirm_checkin', 'value' => '1']) ?>
                     </div>
@@ -75,6 +77,7 @@ $stepName = $step ?? 'form';
                     <?= $form->errorSummary($model, ['class' => 'alert alert-danger']) ?>
                     <?= $this->render('_form', ['form' => $form, 'model' => $model, 'hosts' => $hosts, 'departments' => $departments]) ?>
                     <div class="visitor-check-in-actions">
+                        <?= Html::a('Back to Reception Dashboard', ['/site/reception-dashboard'], ['class' => 'btn btn-link']) ?>
                         <?= Html::a('Check-Out Instead', ['check-out'], ['class' => 'btn btn-link']) ?>
                         <?= Html::submitButton('Continue to Review', ['class' => 'btn btn-checkin btn-lg px-4', 'id' => 'btn-submit-checkin']) ?>
                     </div>

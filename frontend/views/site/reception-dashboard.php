@@ -5,12 +5,35 @@ declare(strict_types=1);
 /** @var yii\web\View $this */
 /** @var string $branchName */
 /** @var common\models\Visit[] $visits */
+/** @var bool $shiftStarted */
+/** @var array<string, string|int> $shift */
 
 use common\models\Visit;
 use yii\helpers\Html;
 
 $this->title = 'Reception Dashboard';
 $this->params['breadcrumbs'][] = $this->title;
+$shiftStarted = $shiftStarted ?? false;
+$shift = is_array($shift ?? null) ? $shift : [];
+if (!$shiftStarted):
+?>
+<div class="reception-dashboard">
+    <div class="card border-0 shadow-sm mx-auto" style="max-width: 720px;">
+        <div class="card-body p-4 p-lg-5 text-center">
+            <span class="text-uppercase small fw-semibold text-primary">Reception workspace</span>
+            <h1 class="h2 mt-2">Start Your Shift</h1>
+            <span class="badge text-bg-secondary mb-3">Shift Not Started</span>
+            <p class="text-body-secondary">You are signed in for <?= Html::encode($branchName) ?>. Start the shift to open today's reception dashboard.</p>
+            <?php if (isset($shift['stopped_at'])): ?>
+                <p class="small text-body-secondary mb-3">Last shift: <?= Html::encode((string) ($shift['started_at'] ?? '—')) ?> - <?= Html::encode((string) $shift['stopped_at']) ?></p>
+            <?php endif; ?>
+            <?= Html::beginForm(['/site/start-shift'], 'post') ?>
+                <?= Html::submitButton('Start Shift', ['class' => 'btn btn-success btn-lg']) ?>
+            <?= Html::endForm() ?>
+        </div>
+    </div>
+</div>
+<?php return; endif;
 $totalVisitors = count($visits);
 $currentInside = count(array_filter($visits, static fn (Visit $visit): bool => $visit->isCheckedIn()));
 $totalCheckedOut = count(array_filter($visits, static fn (Visit $visit): bool => !$visit->isCheckedIn()));
@@ -21,10 +44,15 @@ $totalCheckedOut = count(array_filter($visits, static fn (Visit $visit): bool =>
             <span class="text-uppercase small fw-semibold text-primary">Reception workspace</span>
             <h1 class="h2 mt-2 mb-1">Reception Dashboard</h1>
             <p class="text-body-secondary mb-0"><?= Html::encode($branchName) ?></p>
+            <span class="badge text-bg-success mt-2">Shift Started</span>
+            <p class="small text-body-secondary mb-0 mt-2">Started at: <?= Html::encode((string) ($shift['started_at'] ?? '—')) ?> | Stopped at: Not yet</p>
         </div>
         <div class="d-flex gap-2 flex-wrap">
             <?= Html::a('Check-In Visitor', ['/visitor/check-in'], ['class' => 'btn btn-success']) ?>
             <?= Html::a('Check-Out Visitor', ['/visitor/checkout-page'], ['class' => 'btn btn-primary']) ?>
+            <?= Html::beginForm(['/site/close-shift'], 'post', ['class' => 'd-inline']) ?>
+                <?= Html::submitButton('Close Shift', ['class' => 'btn btn-outline-danger', 'data-confirm' => 'Close the current reception shift?']) ?>
+            <?= Html::endForm() ?>
             <?= Html::beginForm(['/site/change-branch'], 'post', ['class' => 'd-inline']) ?>
                 <?= Html::submitButton('Change Branch', ['class' => 'btn btn-outline-secondary']) ?>
             <?= Html::endForm() ?>
@@ -40,7 +68,7 @@ $totalCheckedOut = count(array_filter($visits, static fn (Visit $visit): bool =>
     <div class="card border-0 shadow-sm">
         <div class="card-body p-0">
             <div class="d-flex justify-content-between align-items-center gap-2 p-3 border-bottom">
-                <div><h2 class="h5 mb-1">All branch visitors</h2><p class="text-body-secondary small mb-0">Visitors currently inside and visitors who have checked out.</p></div>
+                <div><h2 class="h5 mb-1">Branch visitors for today</h2><p class="text-body-secondary small mb-0">Visitors currently inside and visitors who have checked out.</p></div>
                 <span class="badge text-bg-light border"><?= $totalVisitors ?> records</span>
             </div>
             <div class="table-responsive">
