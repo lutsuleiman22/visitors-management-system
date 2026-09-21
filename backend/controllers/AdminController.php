@@ -16,6 +16,7 @@ use common\services\AuditLogService;
 use common\services\BranchCatalog;
 use Yii;
 use yii\helpers\Html;
+use yii\web\UploadedFile;
 use yii\web\Response;
 use yii\web\ServerErrorHttpException;
 
@@ -100,6 +101,72 @@ class AdminController extends BaseController
             Yii::$app->session->setFlash('error', implode(' ', $model->getFirstErrors()));
         }
         return $this->redirect(['branches']);
+    }
+
+    public function actionUploadBranches(): Response
+    {
+        $this->requireRole(User::ROLE_ADMIN);
+        $file = UploadedFile::getInstanceByName('branches_file');
+        if ($file === null) {
+            Yii::$app->session->setFlash('error', 'Please choose a CSV or Excel file.');
+            return $this->redirect(['branches']);
+        }
+
+        $extension = strtolower((string) $file->extension);
+        if (!in_array($extension, ['csv', 'xlsx', 'xls'], true)) {
+            Yii::$app->session->setFlash('error', 'Only CSV, XLSX, and XLS files are supported.');
+            return $this->redirect(['branches']);
+        }
+
+        try {
+            $reader = \PhpOffice\PhpSpreadsheet\IOFactory::createReaderForFile($file->tempName);
+            $reader->setReadDataOnly(true);
+            $sheet = $reader->load($file->tempName)->getActiveSheet();
+            $rows = $sheet->toArray(null, true, true, true);
+            $created = 0;
+            $skipped = 0;
+
+            foreach ($rows as $rowNumber => $row) {
+                if ($rowNumber === 1 && strtolower(trim((string) ($row['A'] ?? ''))) === 'code') {
+                    continue;
+                }
+                $code = strtolower(trim((string) ($row['A'] ?? '')));
+                $name = trim((string) ($row['B'] ?? ''));
+                if ($code === '' || $name === '' || Branch::find()->where(['or', ['code' => $code], ['name' => $name]])->exists()) {
+                    $skipped++;
+                    continue;
+                }
+
+                $branch = new Branch([
+                    'code' => $code,
+                    'name' => $name,
+                    'status' => (int) (($row['C'] ?? '') !== '' ? $row['C'] : 1),
+                ]);
+                if ($branch->validate() && $branch->save(false)) {
+                    $created++;
+                } else {
+                    $skipped++;
+                }
+            }
+
+            AuditLogService::logAction('upload-branches', 'Uploaded branches file: ' . $created . ' created, ' . $skipped . ' skipped.');
+            Yii::$app->session->setFlash('success', 'Branch upload complete: ' . $created . ' created, ' . $skipped . ' skipped.');
+        } catch (\Throwable $exception) {
+            Yii::error($exception->getMessage(), __METHOD__);
+            Yii::$app->session->setFlash('error', 'Unable to read the branch file. Use columns: code, name, status.');
+        }
+
+        return $this->redirect(['branches']);
+    }
+
+    public function actionDownloadBranchTemplate(): Response
+    {
+        $this->requireRole(User::ROLE_ADMIN);
+        return Yii::$app->response->sendContentAsFile(
+            "code,name,status\npbz-stone-town,PBZ Stone Town Branch,1\n",
+            'branches-template.csv',
+            ['mimeType' => 'text/csv'],
+        );
     }
 
     public function actionAddDepartment(): Response
