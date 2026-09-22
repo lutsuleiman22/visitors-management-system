@@ -65,6 +65,10 @@ $labelOptions = ['class' => 'form-label fw-semibold small'];
                         <p class="text-body-secondary small">Enter your credentials to continue</p>
                     </div>
 
+                    <div class="mb-3">
+                        <?= Html::a('&larr; Back', ['/site/index'], ['class' => 'btn btn-outline-secondary btn-sm']) ?>
+                    </div>
+
                     <?php $form = ActiveForm::begin(['id' => 'login-form']); ?>
 
                     <div class="mb-3">
