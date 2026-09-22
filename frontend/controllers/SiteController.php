@@ -109,8 +109,16 @@ class SiteController extends Controller
      *
      * @return string
      */
-    public function actionIndex(): string
+    public function actionIndex(): string|Response
     {
+        if (Yii::$app->user->isGuest) {
+            return $this->redirect(['login']);
+        }
+
+        if (Yii::$app->user->identity?->isReception() === true) {
+            return $this->redirect(['reception-dashboard']);
+        }
+
         $branches = BranchCatalog::all();
         $selectedBranch = (string) Yii::$app->session->get('pbz_branch', '');
 
