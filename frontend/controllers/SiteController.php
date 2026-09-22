@@ -111,10 +111,6 @@ class SiteController extends Controller
      */
     public function actionIndex(): string|Response
     {
-        if (Yii::$app->user->isGuest) {
-            return $this->redirect(['login']);
-        }
-
         if (Yii::$app->user->identity?->isReception() === true) {
             return $this->redirect(['reception-dashboard']);
         }
