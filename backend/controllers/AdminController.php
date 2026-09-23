@@ -33,34 +33,61 @@ class AdminController extends BaseController
         }
 
         try {
-            $visitQuery = Visit::find();
-            $activeQuery = Visit::find()->where(['status' => Visit::STATUS_CHECKED_IN, 'check_out_time' => null]);
-            $checkedOutQuery = Visit::find()->where(['not', ['check_out_time' => null]]);
-            $todayQuery = Visit::find()->where(['>=', 'check_in_time', date('Y-m-d 00:00:00')]);
-            $pendingQuery = Visit::find()->where(['not in', 'status', [Visit::STATUS_CHECKED_IN, Visit::STATUS_CHECKED_OUT]]);
-            $userQuery = User::find();
-            $visitorQuery = Visit::find()->alias('v')->select('v.visitor_id')->distinct();
-            foreach ([$visitQuery, $activeQuery, $checkedOutQuery, $todayQuery, $pendingQuery, $userQuery, $visitorQuery] as $query) {
-                if ($selectedBranch !== '') {
-                    $query->andWhere(['branch_code' => $selectedBranch]);
-                }
-            }
-            $data = [
-                'totalUsers' => (int) $userQuery->count(),
-                'pendingUsers' => (int) User::find()->where(['role' => User::ROLE_RECEPTION, 'status' => User::STATUS_INACTIVE])->count(),
-                'totalVisitors' => (int) $visitorQuery->count(),
-                'totalVisits' => (int) $visitQuery->count(),
-                'activeVisits' => (int) $activeQuery->count(),
-                'checkedOutVisits' => (int) $checkedOutQuery->count(),
-                'pendingVisits' => (int) $pendingQuery->count(),
-                'todayVisits' => (int) $todayQuery->count(),
-                'recentVisitors' => $visitQuery->with(['visitor', 'host'])->orderBy(['created_at' => SORT_DESC])->limit(10)->all(),
-                'branches' => $branches,
-                'selectedBranch' => $selectedBranch,
-            ];
+            $data = $this->dashboardStats($selectedBranch);
         } catch (\Throwable $exception) {
             Yii::error($exception->getMessage(), __METHOD__);
-            $data = [
+            $data = self::emptyDashboardStats($branches, $selectedBranch);
+        }
+        return $this->render('dashboard', $data);
+    }
+
+    /**
+     * Visitor/user counters and recent rows for the admin dashboard.
+     *
+     * @return array<string, mixed>
+     */
+    private function dashboardStats(string $selectedBranch): array
+    {
+        $branches = BranchCatalog::all();
+        $visitQuery = Visit::find();
+        $activeQuery = Visit::find()->where(['status' => Visit::STATUS_CHECKED_IN, 'check_out_time' => null]);
+        $checkedOutQuery = Visit::find()->where(['not', ['check_out_time' => null]]);
+        $todayQuery = Visit::find()->where(['>=', 'check_in_time', date('Y-m-d 00:00:00')]);
+        $pendingQuery = Visit::find()->where(['not in', 'status', [Visit::STATUS_CHECKED_IN, Visit::STATUS_CHECKED_OUT]]);
+        $userQuery = User::find();
+        $visitorQuery = Visit::find()->alias('v')->select('v.visitor_id')->distinct();
+        foreach ([$visitQuery, $activeQuery, $checkedOutQuery, $todayQuery, $pendingQuery, $userQuery, $visitorQuery] as $query) {
+            if ($selectedBranch !== '') {
+                $query->andWhere(['branch_code' => $selectedBranch]);
+            }
+        }
+
+        return [
+            'totalUsers' => (int) $userQuery->count(),
+            'pendingUsers' => (int) User::find()->where(['role' => User::ROLE_RECEPTION, 'status' => User::STATUS_INACTIVE])->count(),
+            'totalVisitors' => (int) $visitorQuery->count(),
+            'totalVisits' => (int) $visitQuery->count(),
+            'activeVisits' => (int) $activeQuery->count(),
+            'checkedOutVisits' => (int) $checkedOutQuery->count(),
+            'pendingVisits' => (int) $pendingQuery->count(),
+            'todayVisits' => (int) $todayQuery->count(),
+            'recentVisitors' => $visitQuery->with(['visitor', 'host'])->orderBy(['created_at' => SORT_DESC])->limit(10)->all(),
+            'branches' => $branches,
+            'selectedBranch' => $selectedBranch,
+        ];
+    }
+
+    /**
+     * Zeroed dashboard payload used when the stats queries fail.
+     *
+     * @param array<string, string> $branches
+     * @return array<string, mixed>
+     */
+    private static function emptyDashboardStats(array $branches, string $selectedBranch): array
+    {
+        return array_map(
+            static fn ($value) => is_int($value) ? 0 : (is_array($value) ? [] : $value),
+            [
                 'totalUsers' => 0,
                 'pendingUsers' => 0,
                 'totalVisitors' => 0,
@@ -72,9 +99,8 @@ class AdminController extends BaseController
                 'recentVisitors' => [],
                 'branches' => $branches,
                 'selectedBranch' => $selectedBranch,
-            ];
-        }
-        return $this->render('dashboard', $data);
+            ]
+        );
     }
 
     public function actionBranches(): string
@@ -93,7 +119,7 @@ class AdminController extends BaseController
         $this->requireRole(User::ROLE_ADMIN);
         $model = new Branch();
         $model->load(Yii::$app->request->post());
-        $model->code = strtolower(trim((string) preg_replace('/[^a-z0-9]+/i', '-', (string) $model->name), '-'));
+        $model->code = self::slugify((string) $model->name);
         if ($model->validate() && $model->save(false)) {
             AuditLogService::logAction('create-branch', 'Branch ' . $model->name . ' created.');
             Yii::$app->session->setFlash('success', 'Branch added successfully.');
@@ -174,7 +200,7 @@ class AdminController extends BaseController
         $this->requireRole(User::ROLE_ADMIN);
         $model = new Department();
         $model->load(Yii::$app->request->post());
-        $model->code = strtolower(trim((string) preg_replace('/[^a-z0-9]+/i', '-', (string) $model->name), '-'));
+        $model->code = self::slugify((string) $model->name);
         if ($model->validate() && $model->save(false)) {
             AuditLogService::logAction('create-department', 'Department ' . $model->name . ' created.');
             Yii::$app->session->setFlash('success', 'Department added successfully.');
@@ -245,9 +271,16 @@ class AdminController extends BaseController
         return $this->redirect(['view-branch', 'id' => $branchId]);
     }
 
-    private function findBranch(int $id): Branch
+    /**
+     * Build a URL-safe code from a human-readable name.
+     */
+    private static function slugify(string $name): string
     {
-        $model = Branch::findOne($id);
+        return strtolower(trim((string) preg_replace('/[^a-z0-9]+/i', '-', $name), '-'));
+    }
+
+    private function findBranch(int $id): Branch
+    {        $model = Branch::findOne($id);
         if ($model === null) {
             throw new \yii\web\NotFoundHttpException('Branch not found.');
         }
@@ -367,14 +400,12 @@ class AdminController extends BaseController
                 . '<p>Period: ' . Html::encode($startDate->format('Y-m-d')) . ' to ' . Html::encode($endDate->format('Y-m-d')) . '</p>'
                 . '<table border="1" cellpadding="6" cellspacing="0" width="100%">'
                 . '<thead><tr><th>Name</th><th>Branch</th><th>Department</th><th>Checked In By</th><th>Checked Out By</th><th>Status</th><th>Date</th></tr></thead><tbody>';
-            foreach ($visits as $visit) {
-                $html .= '<tr><td>' . Html::encode($visit->visitor?->full_name ?? 'Unknown visitor')
-                    . '</td><td>' . Html::encode($filters['branches'][$visit->branch_code] ?? 'Unassigned')
-                    . '</td><td>' . Html::encode($filters['departments'][$visit->branch_code][$visit->department_code] ?? '—')
-                    . '</td><td>' . Html::encode($visit->checkedInBy?->username ?? 'Unknown / legacy')
-                    . '</td><td>' . Html::encode($visit->checkedOutBy?->username ?? ($visit->check_out_time ? 'Unknown / legacy' : '—'))
-                    . '</td><td>' . Html::encode($visit->isCheckedIn() ? 'Inside' : 'Checked out')
-                    . '</td><td>' . Html::encode($visit->check_in_time ?: '—') . '</td></tr>';
+            foreach ($this->reportRows($visits, $filters) as $row) {
+                $html .= '<tr>';
+                foreach ($row as $cell) {
+                    $html .= '<td>' . Html::encode($cell) . '</td>';
+                }
+                $html .= '</tr>';
             }
             $html .= '</tbody></table>';
 
@@ -407,18 +438,7 @@ class AdminController extends BaseController
             $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
             $sheet = $spreadsheet->getActiveSheet();
             $sheet->fromArray(['Name', 'Branch', 'Department', 'Checked In By', 'Checked Out By', 'Status', 'Date'], null, 'A1');
-            $rows = [];
-            foreach ($visits as $visit) {
-                $rows[] = [
-                    (string) ($visit->visitor?->full_name ?? 'Unknown visitor'),
-                    (string) ($filters['branches'][$visit->branch_code] ?? 'Unassigned'),
-                    (string) ($filters['departments'][$visit->branch_code][$visit->department_code] ?? '—'),
-                    (string) ($visit->checkedInBy?->username ?? 'Unknown / legacy'),
-                    (string) ($visit->checkedOutBy?->username ?? ($visit->check_out_time ? 'Unknown / legacy' : '—')),
-                    $visit->isCheckedIn() ? 'Inside' : 'Checked out',
-                    (string) ($visit->check_in_time ?: ''),
-                ];
-            }
+            $rows = $this->reportRows($visits, $filters);
             if ($rows !== []) {
                 $sheet->fromArray($rows, null, 'A2');
             }
@@ -447,9 +467,33 @@ class AdminController extends BaseController
         }
     }
 
-    private function renderTimeReport(string $view, string $title, string $filterType): string
+    /**
+     * The visitor rows shared by the PDF and Excel exports.
+     *
+     * @param array<int, Visit> $visits
+     * @param array<string, mixed> $filters
+     * @return array<int, array<int, string>>
+     */
+    private function reportRows(array $visits, array $filters): array
     {
-        $this->requireRole(User::ROLE_ADMIN);
+        $rows = [];
+        foreach ($visits as $visit) {
+            $rows[] = [
+                (string) ($visit->visitor?->full_name ?? 'Unknown visitor'),
+                (string) ($filters['branches'][$visit->branch_code] ?? 'Unassigned'),
+                (string) ($filters['departments'][$visit->branch_code][$visit->department_code] ?? '—'),
+                (string) ($visit->checkedInBy?->username ?? 'Unknown / legacy'),
+                (string) ($visit->checkedOutBy?->username ?? ($visit->check_out_time ? 'Unknown / legacy' : '—')),
+                $visit->isCheckedIn() ? 'Inside' : 'Checked out',
+                (string) ($visit->check_in_time ?: ''),
+            ];
+        }
+
+        return $rows;
+    }
+
+    private function renderTimeReport(string $view, string $title, string $filterType): string
+    {        $this->requireRole(User::ROLE_ADMIN);
 
         [$visits, $startDate, $endDate, $filterType, $filterValue, $filters] = $this->timeReportData($filterType);
 
@@ -472,46 +516,7 @@ class AdminController extends BaseController
             $filterType = 'daily';
         }
 
-        $today = new \DateTimeImmutable('today');
-        if ($filterType === 'weekly') {
-            $filterValue = $this->filterValue($filterType);
-            $selectedDate = \DateTimeImmutable::createFromFormat('!Y-m-d', $filterValue);
-            if (!$selectedDate || $selectedDate->format('Y-m-d') !== $filterValue || $selectedDate > $today) {
-                $selectedDate = $today;
-                $filterValue = $today->format('Y-m-d');
-            }
-            $startDate = $selectedDate->modify('monday this week');
-            $endDate = $startDate->modify('+6 days')->setTime(23, 59, 59);
-        } elseif ($filterType === 'monthly') {
-            $filterValue = $this->filterValue($filterType);
-            $selectedMonth = \DateTimeImmutable::createFromFormat('!Y-m', $filterValue);
-            if (!$selectedMonth || $selectedMonth->format('Y-m') !== $filterValue || $selectedMonth > $today->modify('first day of this month')) {
-                $selectedMonth = $today->modify('first day of this month');
-                $filterValue = $selectedMonth->format('Y-m');
-            }
-            $startDate = $selectedMonth->modify('first day of this month');
-            $endDate = $startDate->modify('first day of next month')->modify('-1 second');
-        } elseif ($filterType === 'annual') {
-            $filterValue = $this->filterValue($filterType);
-            $currentYear = (int) $today->format('Y');
-            $selectedYear = filter_var($filterValue, FILTER_VALIDATE_INT);
-            if ($selectedYear === false || $selectedYear < 1970 || $selectedYear > $currentYear || (string) $selectedYear !== $filterValue) {
-                $selectedYear = $currentYear;
-                $filterValue = (string) $currentYear;
-            }
-            $startDate = new \DateTimeImmutable($selectedYear . '-01-01');
-            $endDate = $startDate->modify('+1 year')->modify('-1 second');
-        } else {
-            $filterValue = $this->filterValue('daily');
-            $selectedDate = \DateTimeImmutable::createFromFormat('!Y-m-d', $filterValue);
-            if (!$selectedDate || $selectedDate->format('Y-m-d') !== $filterValue || $selectedDate > $today) {
-                $selectedDate = $today;
-                $filterValue = $today->format('Y-m-d');
-            }
-            $startDate = $selectedDate;
-            $endDate = $today->setTime(23, 59, 59);
-            $endDate = $selectedDate->setTime(23, 59, 59);
-        }
+        [$startDate, $endDate, $filterValue] = $this->resolveDateRange($filterType);
 
         $start = $startDate->getTimestamp();
         $end = $endDate->getTimestamp();
@@ -545,5 +550,59 @@ class AdminController extends BaseController
             'annual' => (string) Yii::$app->request->get('year', ''),
             default => (string) Yii::$app->request->get('date', date('Y-m-d')),
         };
+    }
+
+    /**
+     * Parse and clamp the requested value into a valid, non-future date.
+     *
+     * @return array{0: \DateTimeImmutable, 1: string} the clamped date and its canonical filter value
+     */
+    private function clampDate(string $filterType, string $format): array
+    {
+        $filterValue = $this->filterValue($filterType);
+        $today = new \DateTimeImmutable('today');
+        $selected = \DateTimeImmutable::createFromFormat('!' . $format, $filterValue);
+        $upperBound = match ($filterType) {
+            'monthly' => $today->modify('first day of this month'),
+            default => $today,
+        };
+        if (!$selected || $selected->format($format) !== $filterValue || $selected > $upperBound) {
+            $selected = $upperBound;
+            $filterValue = $selected->format($format);
+        }
+
+        return [$selected, $filterValue];
+    }
+
+    /** @return array{0: \DateTimeImmutable, 1: \DateTimeImmutable, 2: string} */
+    private function resolveDateRange(string $filterType): array
+    {
+        $today = new \DateTimeImmutable('today');
+
+        if ($filterType === 'weekly') {
+            [$selectedDate, $filterValue] = $this->clampDate('weekly', 'Y-m-d');
+            $startDate = $selectedDate->modify('monday this week');
+            $endDate = $startDate->modify('+6 days')->setTime(23, 59, 59);
+        } elseif ($filterType === 'monthly') {
+            [$selectedMonth, $filterValue] = $this->clampDate('monthly', 'Y-m');
+            $startDate = $selectedMonth->modify('first day of this month');
+            $endDate = $startDate->modify('first day of next month')->modify('-1 second');
+        } elseif ($filterType === 'annual') {
+            $filterValue = $this->filterValue('annual');
+            $currentYear = (int) $today->format('Y');
+            $selectedYear = filter_var($filterValue, FILTER_VALIDATE_INT);
+            if ($selectedYear === false || $selectedYear < 1970 || $selectedYear > $currentYear || (string) $selectedYear !== $filterValue) {
+                $selectedYear = $currentYear;
+                $filterValue = (string) $currentYear;
+            }
+            $startDate = new \DateTimeImmutable($selectedYear . '-01-01');
+            $endDate = $startDate->modify('+1 year')->modify('-1 second');
+        } else {
+            [$selectedDate, $filterValue] = $this->clampDate('daily', 'Y-m-d');
+            $startDate = $selectedDate;
+            $endDate = $selectedDate->setTime(23, 59, 59);
+        }
+
+        return [$startDate, $endDate, $filterValue];
     }
 }

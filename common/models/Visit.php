@@ -155,8 +155,15 @@ class Visit extends ActiveRecord
      */
     public static function generatePassNumber(): string
     {
-        do {
+        for ($attempt = 0; $attempt < 20; $attempt++) {
             $number = 'VIS-' . random_int(1000, 9999);
+            if (!self::find()->where(['visitor_pass_number' => $number])->exists()) {
+                return $number;
+            }
+        }
+
+        do {
+            $number = 'VIS-' . strtoupper(substr(Yii::$app->security->generateRandomString(8), 0, 8));
         } while (self::find()->where(['visitor_pass_number' => $number])->exists());
 
         return $number;

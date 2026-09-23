@@ -12,4 +12,15 @@ use common\models\User;
 <?= $form->field($model, 'role')->dropDownList(User::roleList()) ?>
 <?= $form->field($model, 'branch_code')->dropDownList($branches, ['prompt' => 'Select PBZ branch']) ?>
 <?= $form->field($model, 'status')->dropDownList([User::STATUS_ACTIVE => 'Active', User::STATUS_INACTIVE => 'Inactive', User::STATUS_DELETED => 'Deleted']) ?>
-<div class="mb-3"><label class="form-label" for="user-password">Password</label><input type="password" id="user-password" name="password" class="form-control" <?= $model->isNewRecord ? 'required' : '' ?>></div>
+<?php if ($model->isNewRecord): ?>
+    <div class="alert alert-info">
+        No password needed here — once saved (with status "Active"), the system will
+        email this user a link to set their own password.
+    </div>
+<?php else: ?>
+    <div class="mb-3">
+        <label class="form-label" for="user-password">New password</label>
+        <input type="password" id="user-password" name="password" class="form-control">
+        <div class="form-text">Leave blank to keep the current password.</div>
+    </div>
+<?php endif; ?>

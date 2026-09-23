@@ -106,10 +106,10 @@ class VisitorController extends Controller
             if ($step === 'preview') {
                 if ($model->validate()) {
                     Yii::$app->session->set($this->getCheckInSessionKey(), $model->attributes);
-                    return $this->render('check-in', ['model' => $model, 'hosts' => $hosts, 'departments' => $departments, 'step' => 'preview']);
+                    return $this->renderCheckInStep('preview', $model, $hosts, $departments);
                 }
 
-                return $this->render('check-in', ['model' => $model, 'hosts' => $hosts, 'departments' => $departments, 'step' => 'form']);
+                return $this->renderCheckInStep('form', $model, $hosts, $departments);
             }
 
             if ($step === 'confirm') {
@@ -129,16 +129,32 @@ class VisitorController extends Controller
                     NotificationService::createNotification('New visitor checked in.', 'success');
                     Yii::$app->session->setFlash('success', 'Check-in successful. Please print or save your visitor pass.');
 
-                    return $this->render('check-in', ['model' => $model, 'hosts' => $hosts, 'departments' => $departments, 'step' => 'success', 'visit' => $visit]);
+                    return $this->renderCheckInStep('success', $model, $hosts, $departments, $visit);
                 }
 
                 Yii::$app->session->setFlash('error', 'Check-in could not be saved. Please review the details and try again.');
-                return $this->render('check-in', ['model' => $model, 'hosts' => $hosts, 'departments' => $departments, 'step' => 'preview']);
+                return $this->renderCheckInStep('preview', $model, $hosts, $departments);
             }
         }
 
         Yii::$app->session->remove($this->getCheckInSessionKey());
-        return $this->render('check-in', ['model' => $model, 'hosts' => $hosts, 'departments' => $departments, 'step' => 'form']);
+        return $this->renderCheckInStep('form', $model, $hosts, $departments);
+    }
+
+    /**
+     * Render one step of the frontend check-in wizard.
+     *
+     * @param array<int, string> $hosts
+     * @param array<int, string> $departments
+     */
+    private function renderCheckInStep(string $step, CheckInForm $model, array $hosts, array $departments, ?Visit $visit = null): string
+    {
+        $params = ['model' => $model, 'hosts' => $hosts, 'departments' => $departments, 'step' => $step];
+        if ($visit !== null) {
+            $params['visit'] = $visit;
+        }
+
+        return $this->render('check-in', $params);
     }
 
     /**
@@ -186,11 +202,9 @@ class VisitorController extends Controller
                     return $this->redirect(['checkout-page']);
                 }
 
-                if ($selectedVisit->checkOut(Yii::$app->user->isGuest ? null : (int) Yii::$app->user->id)) {
+                if ($this->performCheckOut($selectedVisit, 'Visitor checked out through frontend.')) {
                     Yii::$app->session->remove($this->getCheckoutSessionKey());
-                    AuditLogService::logAction('check-out', 'Visitor checked out through frontend.');
-                    NotificationService::createNotification('Visitor checked out: ' . $selectedVisit->visitor->full_name, 'success');
-                    Yii::$app->session->setFlash('success', 'Visitor "' . $selectedVisit->visitor->full_name . '" has been checked out successfully.');
+                    Yii::$app->session->setFlash('success', 'Visitor "' . ($selectedVisit->visitor?->full_name ?? 'Unknown visitor') . '" has been checked out successfully.');
 
                     return $this->render('checkout-page', ['model' => $model, 'step' => 'success', 'visit' => $selectedVisit]);
                 }
@@ -250,15 +264,28 @@ class VisitorController extends Controller
             ->andWhere($this->todayActiveVisitConditions())
             ->one();
 
-        if ($visit !== null && $visit->checkOut(Yii::$app->user->isGuest ? null : (int) Yii::$app->user->id)) {
-            AuditLogService::logAction('check-out', 'Visitor checked out through today\'s visitor list.');
-            NotificationService::createNotification('Visitor checked out: ' . $visit->visitor->full_name, 'success');
-            Yii::$app->session->setFlash('success', 'Check-out successful. Thank you, ' . $visit->visitor->full_name . '.');
+        if ($visit !== null && $this->performCheckOut($visit, 'Visitor checked out through today\'s visitor list.')) {
+            Yii::$app->session->setFlash('success', 'Check-out successful. Thank you, ' . ($visit->visitor?->full_name ?? 'Unknown visitor') . '.');
         } else {
             Yii::$app->session->setFlash('error', 'This visitor is no longer available for check-out.');
         }
 
         return $this->redirect(['checkout-page']);
+    }
+
+    /**
+     * Check out a visit and record the shared side effects (audit log + notification).
+     */
+    private function performCheckOut(Visit $visit, string $auditMessage): bool
+    {
+        if (!$visit->checkOut(Yii::$app->user->isGuest ? null : (int) Yii::$app->user->id)) {
+            return false;
+        }
+
+        AuditLogService::logAction('check-out', $auditMessage);
+        NotificationService::createNotification('Visitor checked out: ' . ($visit->visitor?->full_name ?? 'Unknown visitor'), 'success');
+
+        return true;
     }
 
     private function findActiveVisitById(int $visitId): ?Visit

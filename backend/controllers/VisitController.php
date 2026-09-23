@@ -89,7 +89,7 @@ class VisitController extends BaseController
                 'pagination' => false,
                 'sort' => false,
             ]);
-                $count = (int) $dataProvider->getTotalCount();
+            $count = (int) $dataProvider->getTotalCount();
         } catch (\Throwable $exception) {
             Yii::error($exception->getMessage(), __METHOD__);
             $dataProvider = new ArrayDataProvider(['allModels' => []]);
