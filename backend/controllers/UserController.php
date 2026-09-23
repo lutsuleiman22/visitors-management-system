@@ -215,8 +215,8 @@ class UserController extends BaseController
         }
         try {
             $user = $this->findModel($id);
-            if (!in_array($user->role, [User::ROLE_ADMIN, User::ROLE_RECEPTION], true)) {
-                Yii::$app->session->setFlash('error', 'Only Admin or Reception accounts can be deleted.');
+            if (!in_array($user->role, [User::ROLE_ADMIN, User::ROLE_RECEPTION, 'security'], true)) {
+                Yii::$app->session->setFlash('error', 'Only Admin, Reception, or legacy Security accounts can be deleted.');
                 return $this->redirect(['index', 'branch' => $user->branch_code]);
             }
             if ($user->status === User::STATUS_DELETED) {
