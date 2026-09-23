@@ -37,7 +37,7 @@ $this->params['breadcrumbs'][] = $this->title;
                             <div><span>Check-in time</span><strong><?= Html::encode($visit->check_in_time ?: '—') ?></strong></div>
                         </div>
                         <div class="visitor-action-row">
-                            <a href="<?= Html::encode(Yii::$app->urlManager->createUrl(['/site/reception-dashboard'])) ?>" class="btn visitor-secondary-button">Back to Reception Dashboard</a>
+                            <a href="<?= Html::encode(Yii::$app->urlManager->createUrl(['/visitor/check-in'])) ?>" class="btn visitor-secondary-button">Back to Check-In</a>
                             <a href="<?= Html::encode(Yii::$app->urlManager->createUrl(['/visitor/checkout-page'])) ?>" class="btn visitor-secondary-button">New search</a>
                         </div>
                     </div>
@@ -61,7 +61,7 @@ $this->params['breadcrumbs'][] = $this->title;
                         <?php endif; ?>
 
                         <div class="visitor-action-row">
-                            <a href="<?= Html::encode(Yii::$app->urlManager->createUrl(['/site/reception-dashboard'])) ?>" class="btn visitor-secondary-button">Back to Reception Dashboard</a>
+                            <a href="<?= Html::encode(Yii::$app->urlManager->createUrl(['/visitor/check-in'])) ?>" class="btn visitor-secondary-button">Back to Check-In</a>
                             <?php if ($step === 'preview' && $visit !== null): ?>
                                 <button type="submit" class="btn visitor-primary-button" id="confirm-checkout">Confirm checkout</button>
                                 <a href="<?= Html::encode(Yii::$app->urlManager->createUrl(['/visitor/checkout-page'])) ?>" class="btn visitor-secondary-button">Cancel</a>

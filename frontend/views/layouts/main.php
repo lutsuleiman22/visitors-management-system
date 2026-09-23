@@ -24,6 +24,7 @@ $this->render('_head');
 body.frontend-shell { position: relative; }
 body.frontend-shell::before { background: url('/visitors-management-system/frontend/web/images/pbz%20images.png') center / min(42vw, 520px) no-repeat; content: ''; inset: 0; opacity: .06; pointer-events: none; position: fixed; z-index: 0; }
 body.frontend-shell > * { position: relative; z-index: 1; }
+main .breadcrumb, .breadcrumb { display: none !important; }
 CSS); ?>
 
 <?= $this->render('_header') ?>
