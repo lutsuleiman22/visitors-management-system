@@ -13,8 +13,8 @@ final class UserTest extends Unit
     {
         verify(User::creatableRoleList())
             ->equals([
+                User::ROLE_ADMIN => 'Admin',
                 User::ROLE_RECEPTION => 'Reception',
-                User::ROLE_SECURITY => 'Security',
             ]);
     }
 }

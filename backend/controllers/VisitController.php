@@ -73,7 +73,7 @@ class VisitController extends BaseController
      */
     public function actionEvacuation(): string|Response
     {
-        $this->requireRole(User::ROLE_ADMIN, User::ROLE_SECURITY);
+        $this->requireRole(User::ROLE_ADMIN, User::ROLE_RECEPTION);
 
         try {
             $dataProvider = new ActiveDataProvider([
@@ -109,7 +109,7 @@ class VisitController extends BaseController
      */
     public function actionView(int $id): string|Response
     {
-        $this->requireRole(User::ROLE_ADMIN, User::ROLE_RECEPTION, User::ROLE_SECURITY);
+        $this->requireRole(User::ROLE_ADMIN, User::ROLE_RECEPTION);
 
         return $this->render('view', [
             'model' => $this->findModel($id),

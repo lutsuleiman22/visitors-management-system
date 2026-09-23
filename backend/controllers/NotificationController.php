@@ -28,19 +28,19 @@ class NotificationController extends BaseController
 
     public function actionIndex(): string
     {
-        $this->requireRole(User::ROLE_ADMIN, User::ROLE_RECEPTION, User::ROLE_SECURITY);
+        $this->requireRole(User::ROLE_ADMIN, User::ROLE_RECEPTION);
         return $this->render('index', ['items' => $this->items()]);
     }
 
     public function actionFeed(): Response
     {
-        $this->requireRole(User::ROLE_ADMIN, User::ROLE_RECEPTION, User::ROLE_SECURITY);
+        $this->requireRole(User::ROLE_ADMIN, User::ROLE_RECEPTION);
         return $this->asJson(['success' => true, 'data' => $this->items(), 'message' => '']);
     }
 
     public function actionMarkAsRead(int $id): Response
     {
-        $this->requireRole(User::ROLE_ADMIN, User::ROLE_RECEPTION, User::ROLE_SECURITY);
+        $this->requireRole(User::ROLE_ADMIN, User::ROLE_RECEPTION);
         try {
             Notification::updateAll(
                 ['is_read' => 1],

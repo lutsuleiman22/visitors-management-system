@@ -10,7 +10,6 @@ $identity = Yii::$app->user->identity;
 $role = $identity === null ? '' : (string) $identity->role;
 $isAdmin = $role === 'admin';
 $isReception = $role === 'reception';
-$isSecurity = $role === 'security';
 $frontendBaseUrl = str_replace('/backend/web', '/frontend/web', rtrim(Yii::$app->request->baseUrl, '/'));
 
 ?>

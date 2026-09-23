@@ -13,7 +13,6 @@ $identity = Yii::$app->user->identity;
 $role = $identity === null ? '' : strtolower((string) $identity->role);
 $isAdmin = $role === 'admin';
 $isReception = $role === 'reception';
-$isSecurity = $role === 'security';
 
 $this->render('_head');
 ?>
@@ -56,9 +55,6 @@ CSS); ?>
                 <a class="sidebar-link" href="<?= Html::encode(Yii::$app->urlManager->createUrl(['/visit/create'])) ?>"><span class="sidebar-icon">+</span><span class="menu-text">Add Visitor</span></a>
                 <a class="sidebar-link" href="<?= Html::encode(Yii::$app->urlManager->createUrl(['/visit/index'])) ?>"><span class="sidebar-icon">V</span><span class="menu-text">Visitor List</span></a>
                 <a class="sidebar-link" href="<?= Html::encode(Yii::$app->urlManager->createUrl(['/visit/index'])) ?>"><span class="sidebar-icon">C</span><span class="menu-text">Check-in / Check-out</span></a>
-            <?php elseif ($isSecurity): ?>
-                <a class="sidebar-link" href="<?= Html::encode(Yii::$app->urlManager->createUrl(['/security/dashboard'])) ?>"><span class="sidebar-icon">D</span><span class="menu-text">Dashboard</span></a>
-                <a class="sidebar-link" href="<?= Html::encode(Yii::$app->urlManager->createUrl(['/visit/evacuation'])) ?>"><span class="sidebar-icon">A</span><span class="menu-text">Active Visitors</span></a>
             <?php endif; ?>
         </nav>
         <?php if (!Yii::$app->user->isGuest): ?>

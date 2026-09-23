@@ -11,18 +11,9 @@ use Yii;
 
 class SecurityController extends BaseController
 {
-    public function actionDashboard(): string
+    public function actionDashboard(): Response
     {
-        $this->requireRole(User::ROLE_ADMIN, User::ROLE_SECURITY);
-
-        try {
-            $activeVisits = Visit::find()->with(['visitor', 'host'])->where(['status' => Visit::STATUS_CHECKED_IN, 'check_out_time' => null])->orderBy(['check_in_time' => SORT_ASC])->limit(100)->all();
-            $recentVisits = Visit::find()->with(['visitor', 'host'])->orderBy(['id' => SORT_DESC])->limit(20)->all();
-        } catch (\Throwable $exception) {
-            Yii::error($exception->getMessage(), __METHOD__);
-            $activeVisits = [];
-            $recentVisits = [];
-        }
-        return $this->render('dashboard', ['activeVisits' => $activeVisits, 'recentVisits' => $recentVisits]);
+        Yii::$app->session->setFlash('warning', 'This section is not available because the system is configured for Admin and Reception only.');
+        return $this->redirect(['/admin/dashboard']);
     }
 }

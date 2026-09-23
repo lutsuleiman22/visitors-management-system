@@ -37,7 +37,6 @@ class User extends ActiveRecord implements IdentityInterface
 
     public const ROLE_ADMIN = 'admin';
     public const ROLE_RECEPTION = 'reception';
-    public const ROLE_SECURITY = 'security';
     public const ROLE_USER = 'user';
     /**
      * {@inheritdoc}
@@ -75,7 +74,6 @@ class User extends ActiveRecord implements IdentityInterface
             ['role', 'in', 'range' => [
                 self::ROLE_ADMIN,
                 self::ROLE_RECEPTION,
-                self::ROLE_SECURITY,
                 self::ROLE_USER,
             ]],
         ];
@@ -180,7 +178,6 @@ class User extends ActiveRecord implements IdentityInterface
         return [
             self::ROLE_ADMIN => 'Admin',
             self::ROLE_RECEPTION => 'Reception',
-            self::ROLE_SECURITY => 'Security',
             self::ROLE_USER => 'User',
         ];
     }
@@ -191,7 +188,6 @@ class User extends ActiveRecord implements IdentityInterface
         return [
             self::ROLE_ADMIN => 'Admin',
             self::ROLE_RECEPTION => 'Reception',
-            self::ROLE_SECURITY => 'Security',
         ];
     }
 
@@ -203,11 +199,6 @@ class User extends ActiveRecord implements IdentityInterface
     public function isReception(): bool
     {
         return $this->getRole() === self::ROLE_RECEPTION;
-    }
-
-    public function isSecurity(): bool
-    {
-        return $this->getRole() === self::ROLE_SECURITY;
     }
 
     /**
