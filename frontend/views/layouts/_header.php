@@ -8,6 +8,7 @@ use yii\helpers\Html;
 use yii\helpers\Url;
 
 $identity = Yii::$app->user->identity;
+$backendBaseUrl = str_replace('/frontend/web', '/backend/web', rtrim(Yii::$app->request->baseUrl, '/'));
 
 $items = [
     [
@@ -29,6 +30,7 @@ $items = [
             ['class' => 'frontend-brand', 'aria-label' => 'Visitor Management System home'],
         ) ?>
         <div class="frontend-actions">
+            <?= Html::a('Admin Panel', $backendBaseUrl . '/index.php/site/login', ['class' => 'frontend-admin-button']) ?>
     <?php if (!Yii::$app->user->isGuest): ?>
         <?= Html::a('Logout (' . Html::encode(Yii::$app->user->identity?->username) . ')', Url::to(['/site/logout']), ['class' => 'frontend-logout-button']) ?>
     <?php endif; ?>
@@ -54,8 +56,10 @@ $items = [
 .frontend-nav-link { color: #53677c; font-weight: 600; padding: .55rem .7rem; text-decoration: none; }
 .frontend-nav-link:hover, .frontend-nav-link:focus { color: #0d6efd; }
 .frontend-actions { align-items: center; display: flex; gap: .6rem; margin-left: auto; }
+.frontend-admin-button { background: #f4c542; border: 1px solid #e0b843; border-radius: .45rem; color: #10233e; font-size: .8rem; font-weight: 700; padding: .5rem .9rem; text-decoration: none; }
+.frontend-admin-button:hover, .frontend-admin-button:focus { background: #e7b733; color: #10233e; text-decoration: none; }
 .frontend-logout-button { border: 1px solid #9aa9b7; border-radius: .35rem; color: #53677c; padding: .45rem .7rem; text-decoration: none; }
 .frontend-logout-button:hover, .frontend-logout-button:focus { background: #f1f5f8; color: #10233e; }
 .frontend-theme-button { background: transparent; border: 0; color: #53677c; cursor: pointer; font-size: 1.25rem; padding: .35rem .5rem; }
-@media (max-width: 767.98px) { .frontend-brand-name, .frontend-brand-home { display: none; } .frontend-topbar-inner { gap: .5rem; } .frontend-actions { gap: .25rem; } .frontend-logout-button { font-size: .78rem; } }
+@media (max-width: 767.98px) { .frontend-brand-name, .frontend-brand-home { display: none; } .frontend-topbar-inner { gap: .5rem; } .frontend-actions { gap: .25rem; } .frontend-admin-button, .frontend-logout-button { font-size: .75rem; padding: .45rem .6rem; } }
 CSS); ?>
