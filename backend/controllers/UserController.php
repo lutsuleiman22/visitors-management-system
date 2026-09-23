@@ -109,7 +109,7 @@ class UserController extends BaseController
         try {
             if ($model->load(Yii::$app->request->post())) {
                 if (!array_key_exists($model->role, User::creatableRoleList())) {
-                    Yii::$app->session->setFlash('error', 'You can only create Reception or Security accounts from this form.');
+                    Yii::$app->session->setFlash('error', 'You can only create Admin, Reception, or Security accounts from this form.');
                     return $this->render('create', ['model' => $model, 'branches' => BranchCatalog::all()]);
                 }
 
@@ -215,8 +215,8 @@ class UserController extends BaseController
         }
         try {
             $user = $this->findModel($id);
-            if (!in_array($user->role, [User::ROLE_RECEPTION, User::ROLE_SECURITY], true)) {
-                Yii::$app->session->setFlash('error', 'Only Reception or Security accounts can be deleted.');
+            if (!in_array($user->role, [User::ROLE_ADMIN, User::ROLE_RECEPTION, User::ROLE_SECURITY], true)) {
+                Yii::$app->session->setFlash('error', 'Only Admin, Reception, or Security accounts can be deleted.');
                 return $this->redirect(['index', 'branch' => $user->branch_code]);
             }
             if ($user->status === User::STATUS_DELETED) {

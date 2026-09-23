@@ -185,6 +185,16 @@ class User extends ActiveRecord implements IdentityInterface
         ];
     }
 
+    /** @return array<string, string> */
+    public static function creatableRoleList(): array
+    {
+        return [
+            self::ROLE_ADMIN => 'Admin',
+            self::ROLE_RECEPTION => 'Reception',
+            self::ROLE_SECURITY => 'Security',
+        ];
+    }
+
     public function isAdmin(): bool
     {
         return $this->getRole() === self::ROLE_ADMIN;

@@ -9,7 +9,7 @@ use common\models\User;
 ?>
 <?= $form->field($model, 'username')->textInput(['maxlength' => true]) ?>
 <?= $form->field($model, 'email')->input('email', ['maxlength' => true]) ?>
-<?= $form->field($model, 'role')->dropDownList(User::roleList()) ?>
+<?= $form->field($model, 'role')->dropDownList(User::creatableRoleList()) ?>
 <?= $form->field($model, 'branch_code')->dropDownList($branches, ['prompt' => 'Select PBZ branch']) ?>
 <?= $form->field($model, 'status')->dropDownList([User::STATUS_ACTIVE => 'Active', User::STATUS_INACTIVE => 'Inactive', User::STATUS_DELETED => 'Deleted']) ?>
 <?php if ($model->isNewRecord): ?>
