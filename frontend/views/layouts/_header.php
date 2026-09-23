@@ -46,8 +46,25 @@ $items = [
     </div>
 </header>
 <?php $this->registerCss(<<<'CSS'
-.frontend-topbar { background: #fff; border-bottom: 1px solid #dfe7ee; box-shadow: 0 2px 8px rgba(16,35,62,.06); min-height: 82px; }
-.frontend-topbar-inner { align-items: center; display: flex; gap: .5rem; margin: 0 auto; max-width: 1320px; min-height: 82px; padding: 0 1rem; }
+#header {
+    background: rgba(255, 255, 255, 0.96);
+    border-bottom: 1px solid #dfe7ee;
+    box-shadow: 0 2px 8px rgba(16,35,62,.06);
+    position: sticky;
+    top: 0;
+    z-index: 1100;
+}
+.frontend-topbar-inner {
+    align-items: center;
+    display: flex;
+    gap: .5rem;
+    margin: 0 auto;
+    max-width: 1320px;
+    min-height: 76px;
+    padding: 0 1rem;
+    position: relative;
+    z-index: 1;
+}
 .frontend-brand { align-items: center; display: inline-flex; gap: .6rem; white-space: nowrap; }
 .frontend-brand:hover { text-decoration: none; }
 .frontend-brand-name { color: #10233e; font-size: 1rem; font-weight: 800; }

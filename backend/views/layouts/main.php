@@ -87,7 +87,7 @@ CSS); ?>
 :root { --backend-sidebar: 248px; --backend-sidebar-collapsed: 70px; --backend-ink: #10233e; --backend-muted: #5b6f82; --backend-line: #dfe7ee; --backend-surface: #ffffff; --backend-canvas: #eef4f7; --bank-navy: #10233e; --bank-blue: #1a4c74; --bank-teal: #1fa7a1; --bank-gold: #d4a94d; }
 .backend-shell { background: var(--backend-canvas); color: var(--backend-ink); }
 body { overflow-y: auto; }
-.backend-topbar { position: sticky; top: 0; z-index: 2000; height: 64px; display: flex; align-items: center; justify-content: space-between; padding: 0 1.25rem; background: linear-gradient(135deg, #f8fafc 0%, #edf5f7 100%); border-bottom: 1px solid var(--backend-line); box-shadow: 0 1px 0 rgba(16, 35, 62, 0.06); }
+.backend-topbar { position: sticky; top: 0; z-index: 2000; width: 100%; height: 64px; display: flex; align-items: center; justify-content: space-between; padding: 0 1.25rem; background: linear-gradient(135deg, #f8fafc 0%, #edf5f7 100%); border-bottom: 1px solid var(--backend-line); box-shadow: 0 1px 0 rgba(16, 35, 62, 0.06); }
 .topbar-left, .topbar-actions { display: flex; align-items: center; gap: .8rem; }
 .topbar-brand { color: var(--bank-navy); font-weight: 800; letter-spacing: .01em; text-decoration: none; }
 .topbar-context { color: var(--backend-muted); font-size: .82rem; border-left: 1px solid var(--backend-line); padding-left: .8rem; }
