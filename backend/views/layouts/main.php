@@ -26,7 +26,7 @@ $this->render('_head');
 <body class="d-flex flex-column min-vh-100 backend-shell">
 <?php $this->beginBody() ?>
 <?php $this->registerCss(<<<'CSS'
-body.backend-shell { position: relative; }
+body.backend-shell { position: relative; min-height: 100vh; }
 body.backend-shell::before { background: url('/visitors-management-system/frontend/web/images/pbz%20images.png') center / min(42vw, 520px) no-repeat; content: ''; inset: 0; opacity: .06; pointer-events: none; position: fixed; z-index: 0; }
 body.backend-shell > * { position: relative; z-index: 1; }
 CSS); ?>
@@ -94,7 +94,7 @@ body { overflow-y: auto; }
 .topbar-link { color: var(--backend-muted); font-size: .85rem; text-decoration: none; }
 .topbar-link:hover { color: var(--bank-blue); }
 .topbar-role { color: var(--bank-navy); font-size: .68rem; letter-spacing: .06em; }
-.backend-frame { display: flex; flex: 1; min-height: calc(100vh - 64px); }
+.backend-frame { display: flex; flex: 1 1 auto; min-height: 0; }
 .backend-sidebar { position: sticky; top: 64px; left: 0; z-index: 1500; height: calc(100vh - 64px); width: var(--backend-sidebar); display: flex; flex-direction: column; overflow-x: hidden; overflow-y: auto; padding: 1.25rem .85rem 1rem; background: linear-gradient(180deg, #10233e 0%, #143755 100%); color: #d8e0e7; transition: width .2s ease; }
 .sidebar-brand { display: flex; align-items: center; gap: .7rem; padding: .35rem .65rem 1.35rem; color: #fff; }
 .sidebar-brand small, .sidebar-user small { display: block; color: #a7bac9; font-size: .72rem; margin-top: .15rem; }
@@ -106,14 +106,14 @@ body { overflow-y: auto; }
 .sidebar-icon { display: grid; place-items: center; flex: 0 0 1.55rem; height: 1.55rem; border: 1px solid rgba(255,255,255,.18); border-radius: .4rem; color: #6ee0d3; font-size: .72rem; font-weight: 800; }
 .sidebar-user { display: flex; align-items: center; gap: .65rem; margin: 1rem .25rem 0; padding: .75rem .45rem 0; border-top: 1px solid rgba(255,255,255,.12); font-size: .82rem; }
 .sidebar-user-avatar { display: grid; place-items: center; flex: 0 0 2rem; height: 2rem; border-radius: 50%; background: linear-gradient(135deg, var(--bank-gold), #b7872d); color: #fff; font-weight: 700; }
-.backend-main { display: flex; flex: 1; min-width: 0; flex-direction: column; margin-left: 0; transition: margin-left .2s ease; position: relative; z-index: 1; }
+.backend-main { display: flex; flex: 1 1 auto; min-width: 0; min-height: 0; flex-direction: column; margin-left: 0; transition: margin-left .2s ease; position: relative; z-index: 1; }
 .backend-sidebar.collapsed { width: var(--backend-sidebar-collapsed); }
 .backend-frame.sidebar-collapsed .backend-main { margin-left: 0; }
 .backend-sidebar.collapsed .menu-text, .backend-sidebar.collapsed .sidebar-brand > div, .backend-sidebar.collapsed .sidebar-section-label, .backend-sidebar.collapsed .sidebar-user > div:not(.sidebar-user-avatar) { display: none; }
 .backend-sidebar.collapsed .sidebar-link { justify-content: center; padding-left: .7rem; padding-right: .7rem; }
 .backend-sidebar.collapsed .sidebar-brand { justify-content: center; padding-left: 0; padding-right: 0; }
 .backend-sidebar.collapsed .sidebar-user { justify-content: center; }
-.backend-content { flex: 1; padding: 1.5rem 0 2.5rem; }
+.backend-content { flex: 1 1 auto; min-height: auto; padding: 1rem 0 2rem; }
 .backend-content .card { border: 1px solid var(--backend-line) !important; border-radius: .7rem; box-shadow: 0 4px 18px rgba(23,33,43,.04) !important; }
 .backend-content .table { --bs-table-bg: var(--backend-surface); }
 .backend-content .table thead th { color: var(--backend-muted); font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; background: #f8fafb; border-bottom-width: 1px; }
