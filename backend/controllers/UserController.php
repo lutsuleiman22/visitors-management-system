@@ -132,7 +132,7 @@ class UserController extends BaseController
 
                 // Generate a temporary password and include it in the invite email.
                 // The user logs in with it, waits for admin approval, and then sets a new password.
-                $generatedPassword = Yii::$app->security->generateRandomString(12);
+                $generatedPassword = Yii::$app->security->generateRandomString(8);
                 $model->setPassword($generatedPassword);
                 $model->generateAuthKey();
 
