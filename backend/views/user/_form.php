@@ -14,8 +14,9 @@ use common\models\User;
 <?= $form->field($model, 'status')->dropDownList([User::STATUS_ACTIVE => 'Active', User::STATUS_INACTIVE => 'Inactive', User::STATUS_DELETED => 'Deleted']) ?>
 <?php if ($model->isNewRecord): ?>
     <div class="alert alert-info">
-        No password needed here — once saved (with status "Active"), the system will
-        email this user a link to set their own password.
+        No password is entered here. When you save the user, the system will send the username,
+        a temporary password, and a login link. If the account is set to <strong>Inactive</strong>,
+        the user must log in and wait for admin approval before they can create a new password and start their shift.
     </div>
 <?php else: ?>
     <div class="mb-3">

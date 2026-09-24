@@ -111,12 +111,22 @@ class SiteController extends Controller
      */
     public function actionIndex(): string|Response
     {
-        if (Yii::$app->user->identity?->isReception() === true) {
-            return $this->redirect(['reception-dashboard']);
+        if (Yii::$app->user->isGuest) {
+            return $this->redirect(['/site/login']);
+        }
+
+        $identity = Yii::$app->user->identity;
+        $selectedBranch = (string) Yii::$app->session->get('pbz_branch', '');
+
+        if ($identity instanceof User && $identity->isReception()) {
+            if ($selectedBranch !== '') {
+                return $this->redirect(['reception-dashboard']);
+            }
+
+            return $this->redirect(['/site/login']);
         }
 
         $branches = BranchCatalog::all();
-        $selectedBranch = (string) Yii::$app->session->get('pbz_branch', '');
 
         if (Yii::$app->request->isPost) {
             $selectedBranch = trim((string) Yii::$app->request->post('branch', ''));
@@ -167,12 +177,16 @@ class SiteController extends Controller
                     Yii::$app->user->logout();
                     $model->addError('username', 'Only reception accounts can access the frontend desk.');
                 } else {
-                    $selectedBranch = (string) Yii::$app->user->identity->branch_code;
-                    Yii::$app->session->set('pbz_branch', $selectedBranch);
-                    $activeShift = ReceptionShift::findOne([
-                        'branch_code' => $selectedBranch,
-                        'status' => ReceptionShift::STATUS_OPEN,
-                    ]);
+                    $selectedBranch = trim((string) Yii::$app->user->identity->branch_code);
+                    if ($selectedBranch === '') {
+                        Yii::$app->user->logout();
+                        $model->addError('username', 'This reception account is not assigned to a PBZ branch yet. Please contact the admin.');
+                    } else {
+                        Yii::$app->session->set('pbz_branch', $selectedBranch);
+                        $activeShift = ReceptionShift::findOne([
+                            'branch_code' => $selectedBranch,
+                            'status' => ReceptionShift::STATUS_OPEN,
+                        ]);
                     if ($activeShift !== null && (int) $activeShift->user_id !== (int) Yii::$app->user->id) {
                         Yii::$app->user->logout(true);
                         $model->addError('username', 'Another reception user has an active shift at this branch. That shift must be closed first.');
@@ -181,6 +195,7 @@ class SiteController extends Controller
                             Yii::$app->session->set('reception_shift', $this->shiftSessionData($activeShift));
                         }
                         return $this->redirect(['/site/reception-dashboard']);
+                    }
                     }
                 }
             }

@@ -65,7 +65,9 @@ class UserController extends BaseController
             return $this->redirect(['index']);
         }
 
-        if ($user->updateAttributes(['status' => User::STATUS_ACTIVE])) {
+        $user->generatePasswordResetToken();
+
+        if ($user->save(false, ['password_reset_token', 'updated_at']) && $user->updateAttributes(['status' => User::STATUS_ACTIVE])) {
             AuditLogService::logAction('approve-user', 'Reception account #' . $user->id . ' approved.');
 
             if ($this->sendAccountApprovedEmail($user)) {
@@ -89,6 +91,10 @@ class UserController extends BaseController
         try {
             $frontendHostInfo = rtrim((string) Yii::$app->params['frontendHostInfo'], '/');
             $loginLink = $frontendHostInfo . '/index.php?' . http_build_query(['r' => 'site/login']);
+            $resetLink = $frontendHostInfo . '/index.php?' . http_build_query([
+                'r' => 'site/reset-password',
+                'token' => $model->password_reset_token,
+            ]);
 
             $transport = Transport::fromDsn('smtp://faridasleyman@gmail.com:vpyeoroajaxjepqz@smtp.gmail.com:587?encryption=tls&auth_mode=login');
             $mailer = new Mailer($transport);
@@ -99,8 +105,10 @@ class UserController extends BaseController
                 ->subject('Your account on ' . Yii::$app->name . ' has been approved')
                 ->html(
                     '<p>Hello ' . htmlspecialchars((string) $model->username, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . ',</p>' .
-                    '<p>Your account has been approved.</p>' .
-                    '<p><a href="' . htmlspecialchars($loginLink, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '">Login here</a></p>'
+                    '<p>Your reception account has been approved.</p>' .
+                    '<p>Please set your new password using the link below before you begin your shift.</p>' .
+                    '<p><a href="' . htmlspecialchars($resetLink, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '">Set your new password</a></p>' .
+                    '<p>Or log in here: <a href="' . htmlspecialchars($loginLink, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '">Login</a></p>'
                 );
 
             $mailer->send($email);
@@ -123,7 +131,7 @@ class UserController extends BaseController
                 }
 
                 // Generate a temporary password and include it in the invite email.
-                // The user can change it after logging in with the reset link.
+                // The user logs in with it, waits for admin approval, and then sets a new password.
                 $generatedPassword = Yii::$app->security->generateRandomString(12);
                 $model->setPassword($generatedPassword);
                 $model->generateAuthKey();
@@ -131,14 +139,15 @@ class UserController extends BaseController
                 if ($model->save()) {
                     AuditLogService::logAction('create-user', 'User #' . $model->id . ' created.');
 
-                    if ((int) $model->status === User::STATUS_ACTIVE) {
+                    if (in_array((int) $model->status, [User::STATUS_ACTIVE, User::STATUS_INACTIVE], true)) {
                         if ($this->sendAccountInviteEmail($model, $generatedPassword)) {
-                            Yii::$app->session->setFlash('success', 'User created. An invite email was sent to ' . $model->email . '.');
+                            $statusText = (int) $model->status === User::STATUS_INACTIVE ? 'pending approval' : 'active account';
+                            Yii::$app->session->setFlash('success', 'User created. Login details were sent to ' . $model->email . ' for the ' . $statusText . ' flow.');
                         } else {
                             Yii::$app->session->setFlash('warning', 'User created, but the invite email could not be sent. Please check the mailer configuration.');
                         }
                     } else {
-                        Yii::$app->session->setFlash('success', 'User created successfully. Activate the account to send the invite email.');
+                        Yii::$app->session->setFlash('success', 'User created successfully.');
                     }
 
                     return $this->redirect(['index']);
@@ -156,31 +165,32 @@ class UserController extends BaseController
     }
 
     /**
-     * Sends the "set your password" invite email to a newly created, active user.
+     * Sends the login instructions to a newly created user.
+     * The message includes the username and temporary password so the user can sign in,
+     * wait for admin approval, and then set a new password once approved.
      */
     protected function sendAccountInviteEmail(User $model, ?string $generatedPassword = null): bool
     {
         try {
-            $model->generatePasswordResetToken();
-            if (!$model->save(false, ['password_reset_token'])) {
-                return false;
-            }
-
             $frontendHostInfo = rtrim((string) Yii::$app->params['frontendHostInfo'], '/');
-            $setPasswordLink = $frontendHostInfo . '/index.php?' . http_build_query([
-                'r' => 'site/reset-password',
-                'token' => $model->password_reset_token,
+            $loginLink = $frontendHostInfo . '/index.php?' . http_build_query([
+                'r' => 'site/login',
             ]);
 
             $transport = Transport::fromDsn('smtp://faridasleyman@gmail.com:vpyeoroajaxjepqz@smtp.gmail.com:587?encryption=tls&auth_mode=login');
             $mailer = new Mailer($transport);
 
+            $approvalNote = (int) $model->status === User::STATUS_INACTIVE
+                ? '<p>Your account is pending admin approval. Log in with the credentials below, wait for approval, then set a new password before starting your shift.</p>'
+                : '<p>Log in with the credentials below and continue to your desk.</p>';
+
             $emailBody =
                 '<p>Hello ' . htmlspecialchars((string) $model->username, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . ',</p>' .
-                '<p>You have been added to the system.</p>' .
+                '<p>Your account has been created in the system.</p>' .
+                '<p><strong>Username:</strong> ' . htmlspecialchars((string) $model->username, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '</p>' .
                 '<p><strong>Temporary password:</strong> ' . htmlspecialchars((string) $generatedPassword, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '</p>' .
-                '<p>Please use this password and then set a new one using the link below.</p>' .
-                '<p><a href="' . htmlspecialchars($setPasswordLink, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '">Set your password</a></p>';
+                $approvalNote .
+                '<p><a href="' . htmlspecialchars($loginLink, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '">Login here</a></p>';
 
             $email = (new Email())
                 ->from('faridasleyman@gmail.com')
