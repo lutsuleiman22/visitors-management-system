@@ -286,9 +286,16 @@ class SiteController extends Controller
         }
 
         if ($activeShift === null) {
+            $timetableOptions = ReceptionShift::timetableOptions();
+            $postedTimetable = trim((string) Yii::$app->request->post('timetable', ''));
+            $timetable = $postedTimetable !== '' && array_key_exists($postedTimetable, $timetableOptions)
+                ? $timetableOptions[$postedTimetable]
+                : ($timetableOptions !== [] ? reset($timetableOptions) : 'Morning Shift');
+
             $activeShift = new ReceptionShift();
             $activeShift->user_id = (int) $identity->id;
             $activeShift->branch_code = $branch;
+            $activeShift->timetable = $timetable;
             $activeShift->started_at = date('Y-m-d H:i:s');
             $activeShift->status = ReceptionShift::STATUS_OPEN;
             if (!$activeShift->save()) {
@@ -369,13 +376,14 @@ class SiteController extends Controller
         return $this->redirect(['/site/index']);
     }
 
-    /** @return array{user_id: int, branch: string, started_at: string} */
+    /** @return array{user_id: int, branch: string, started_at: string, timetable: string} */
     private function shiftSessionData(ReceptionShift $shift): array
     {
         return [
             'user_id' => (int) $shift->user_id,
             'branch' => (string) $shift->branch_code,
             'started_at' => (string) $shift->started_at,
+            'timetable' => (string) ($shift->timetable ?? 'Morning Shift'),
         ];
     }
 

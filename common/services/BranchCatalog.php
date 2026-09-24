@@ -12,20 +12,25 @@ final class BranchCatalog
     /** @return array<string, string> */
     public static function all(): array
     {
-        $fallback = [
-            'pbz-head-office' => 'PBZ Head Office - Zanzibar',
-            'pbz-mwanakwerekwe' => 'PBZ Mwanakwerekwe Branch',
-            'pbz-malindi' => 'PBZ Malindi Branch',
-            'pbz-chakechake' => 'PBZ Chake Chake Branch',
-            'pbz-wete' => 'PBZ Wete Branch',
-            'pbz-nungwi' => 'PBZ Nungwi Branch',
-        ];
+        $known = self::knownBranches();
 
         try {
             $items = Branch::find()->select(['code', 'name'])->where(['status' => 1])->orderBy(['name' => SORT_ASC])->asArray()->all();
-            return $items === [] ? $fallback : array_column($items, 'name', 'code');
+            if ($items === []) {
+                return $known;
+            }
+
+            $filtered = [];
+            foreach ($items as $item) {
+                $code = (string) ($item['code'] ?? '');
+                if ($code !== '' && array_key_exists($code, $known)) {
+                    $filtered[$code] = $known[$code];
+                }
+            }
+
+            return $filtered === [] ? $known : $filtered;
         } catch (\Throwable) {
-            return $fallback;
+            return $known;
         }
     }
 
@@ -75,14 +80,33 @@ final class BranchCatalog
             if ($items === []) {
                 return $fallback;
             }
+
             $result = [];
             foreach ($items as $item) {
-                $result[$item['branch_code']][$item['code']] = $item['name'];
+                $branchCode = (string) ($item['branch_code'] ?? '');
+                $departmentCode = (string) ($item['code'] ?? '');
+                if ($branchCode !== '' && $departmentCode !== '' && array_key_exists($branchCode, self::knownBranches())) {
+                    $result[$branchCode][$departmentCode] = $item['name'];
+                }
             }
-            return $result;
+
+            return $result === [] ? $fallback : $result;
         } catch (\Throwable) {
             return $fallback;
         }
+    }
+
+    /** @return array<string, string> */
+    private static function knownBranches(): array
+    {
+        return [
+            'pbz-head-office' => 'PBZ Head Office - Zanzibar',
+            'pbz-mwanakwerekwe' => 'PBZ Mwanakwerekwe Branch',
+            'pbz-malindi' => 'PBZ Malindi Branch',
+            'pbz-chakechake' => 'PBZ Chake Chake Branch',
+            'pbz-wete' => 'PBZ Wete Branch',
+            'pbz-nungwi' => 'PBZ Nungwi Branch',
+        ];
     }
 
     /** @return array<string, string> */

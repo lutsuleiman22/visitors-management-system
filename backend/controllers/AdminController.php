@@ -9,6 +9,7 @@ use common\models\AuditLog;
 use common\models\Branch;
 use common\models\Department;
 use common\models\ReceptionShift;
+use common\models\ShiftTimetable;
 use common\models\User;
 use common\models\Visit;
 use common\models\Visitor;
@@ -107,10 +108,18 @@ class AdminController extends BaseController
     {
         $this->requireRole(User::ROLE_ADMIN);
 
+        $knownBranches = array_keys(BranchCatalog::all());
+        $branchModels = Branch::find()
+            ->with('departments')
+            ->where(['status' => 1])
+            ->andWhere(['in', 'code', $knownBranches])
+            ->orderBy(['name' => SORT_ASC])
+            ->all();
+
         return $this->render('branches', [
             'branches' => BranchCatalog::all(),
             'departments' => BranchCatalog::departments(),
-            'branchModels' => Branch::find()->with('departments')->where(['status' => 1])->orderBy(['name' => SORT_ASC])->all(),
+            'branchModels' => $branchModels,
         ]);
     }
 
@@ -355,6 +364,30 @@ class AdminController extends BaseController
         $this->requireRole(User::ROLE_ADMIN);
 
         return $this->render('reports');
+    }
+
+    public function actionTimetables(): string|Response
+    {
+        $this->requireRole(User::ROLE_ADMIN);
+
+        $model = new ShiftTimetable();
+        if ($model->load(Yii::$app->request->post())) {
+            $model->code = $model->code !== ''
+                ? strtolower((string) $model->code)
+                : self::slugify((string) $model->name);
+
+            if ($model->validate() && $model->save()) {
+                Yii::$app->session->setFlash('success', 'Timetable created successfully.');
+                return $this->redirect(['timetables']);
+            }
+
+            Yii::$app->session->setFlash('error', implode(' ', $model->getFirstErrors()));
+        }
+
+        return $this->render('timetables', [
+            'model' => $model,
+            'timetables' => ShiftTimetable::find()->orderBy(['start_time' => SORT_ASC, 'id' => SORT_ASC])->all(),
+        ]);
     }
 
     public function actionShifts(): string

@@ -50,6 +50,7 @@ CSS); ?>
                 <a class="sidebar-link" href="<?= Html::encode(Yii::$app->urlManager->createUrl(['/visit/index'])) ?>"><span class="sidebar-icon">V</span><span class="menu-text">Visitors</span></a>
                 <a class="sidebar-link" href="<?= Html::encode(Yii::$app->urlManager->createUrl(['/audit-log/index'])) ?>"><span class="sidebar-icon">A</span><span class="menu-text">Audit Logs</span></a>
                 <a class="sidebar-link" href="<?= Html::encode(Yii::$app->urlManager->createUrl(['/admin/shifts'])) ?>"><span class="sidebar-icon">S</span><span class="menu-text">Shift Registration</span></a>
+                <a class="sidebar-link" href="<?= Html::encode(Yii::$app->urlManager->createUrl(['/admin/timetables'])) ?>"><span class="sidebar-icon">T</span><span class="menu-text">Timetables</span></a>
             <?php elseif ($isReception): ?>
                 <a class="sidebar-link" href="<?= Html::encode(Yii::$app->urlManager->createUrl(['/reception/dashboard'])) ?>"><span class="sidebar-icon">D</span><span class="menu-text">Dashboard</span></a>
                 <a class="sidebar-link" href="<?= Html::encode(Yii::$app->urlManager->createUrl(['/visit/create'])) ?>"><span class="sidebar-icon">+</span><span class="menu-text">Add Visitor</span></a>

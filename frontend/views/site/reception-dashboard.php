@@ -27,7 +27,11 @@ if (!$shiftStarted):
             <?php if (isset($shift['stopped_at'])): ?>
                 <p class="small text-body-secondary mb-3">Last shift: <?= Html::encode((string) ($shift['started_at'] ?? '—')) ?> - <?= Html::encode((string) $shift['stopped_at']) ?></p>
             <?php endif; ?>
+            <?php $timetableOptions = \common\models\ReceptionShift::timetableOptions(); ?>
             <?= Html::beginForm(['/site/start-shift'], 'post') ?>
+                <div class="mb-3">
+                    <?= Html::dropDownList('timetable', array_key_first($timetableOptions) ?: 'morning', $timetableOptions, ['class' => 'form-select', 'prompt' => 'Select timetable']) ?>
+                </div>
                 <?= Html::submitButton('Start Shift', ['class' => 'btn btn-success btn-lg']) ?>
             <?= Html::endForm() ?>
         </div>
