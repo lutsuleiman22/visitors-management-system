@@ -219,14 +219,10 @@ class UserController extends BaseController
                 Yii::$app->session->setFlash('error', 'Only Admin, Reception, or legacy Security accounts can be deleted.');
                 return $this->redirect(['index', 'branch' => $user->branch_code]);
             }
-            if ($user->status === User::STATUS_DELETED) {
-                Yii::$app->session->setFlash('warning', 'This user is already deleted.');
-                return $this->redirect(['index', 'branch' => $user->branch_code]);
-            }
             $branch = $user->branch_code;
-            $user->updateAttributes(['status' => User::STATUS_DELETED]);
-            AuditLogService::logAction('delete-user', 'User #' . $id . ' deleted.');
-            Yii::$app->session->setFlash('success', 'User deleted.');
+            $user->delete();
+            AuditLogService::logAction('delete-user', 'User #' . $id . ' permanently deleted.');
+            Yii::$app->session->setFlash('success', 'User deleted permanently.');
         } catch (\Throwable $exception) {
             Yii::error($exception->getMessage(), __METHOD__);
             Yii::$app->session->setFlash('error', 'Unable to delete this user at this time.');
