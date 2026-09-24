@@ -51,9 +51,18 @@ class ResetPasswordForm extends Model
      *
      * @return bool if password was reset.
      */
+    public function getUser(): User
+    {
+        if ($this->_user === null) {
+            throw new InvalidArgumentException('Wrong password reset token.');
+        }
+
+        return $this->_user;
+    }
+
     public function resetPassword(): bool
     {
-        $user = $this->_user;
+        $user = $this->getUser();
         $user->setPassword($this->password);
         $user->removePasswordResetToken();
         $user->generateAuthKey();

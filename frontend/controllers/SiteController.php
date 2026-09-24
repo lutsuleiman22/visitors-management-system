@@ -455,6 +455,16 @@ class SiteController extends Controller
         }
 
         if ($model->load(Yii::$app->request->post()) && $model->validate() && $model->resetPassword()) {
+            $user = $model->getUser();
+
+            if ($user->isReception()) {
+                Yii::$app->user->login($user, 3600 * 24 * 30);
+                Yii::$app->session->set('pbz_branch', (string) $user->branch_code);
+                Yii::$app->session->setFlash('success', 'Password set successfully. You can now start your shift.');
+
+                return $this->redirect(['reception-dashboard']);
+            }
+
             Yii::$app->session->setFlash('success', 'New password saved.');
 
             return $this->goHome();

@@ -8,6 +8,9 @@ use backend\components\BaseController;
 use common\models\User;
 use common\services\AuditLogService;
 use common\services\BranchCatalog;
+use Symfony\Component\Mailer\Mailer;
+use Symfony\Component\Mailer\Transport;
+use Symfony\Component\Mime\Email;
 use Yii;
 use yii\data\ArrayDataProvider;
 use yii\data\ActiveDataProvider;
@@ -87,15 +90,21 @@ class UserController extends BaseController
             $frontendHostInfo = rtrim((string) Yii::$app->params['frontendHostInfo'], '/');
             $loginLink = $frontendHostInfo . '/index.php?' . http_build_query(['r' => 'site/login']);
 
-            return Yii::$app->mailer
-                ->compose(
-                    ['html' => 'accountApproved-html', 'text' => 'accountApproved-text'],
-                    ['user' => $model, 'loginLink' => $loginLink, 'appName' => Yii::$app->name],
-                )
-                ->setFrom([(string) Yii::$app->params['senderEmail'] => (string) Yii::$app->params['senderName']])
-                ->setTo($model->email)
-                ->setSubject('Your account on ' . Yii::$app->name . ' has been approved')
-                ->send();
+            $transport = Transport::fromDsn('smtp://faridasleyman@gmail.com:vpyeoroajaxjepqz@smtp.gmail.com:587?encryption=tls&auth_mode=login');
+            $mailer = new Mailer($transport);
+
+            $email = (new Email())
+                ->from('faridasleyman@gmail.com')
+                ->to($model->email)
+                ->subject('Your account on ' . Yii::$app->name . ' has been approved')
+                ->html(
+                    '<p>Hello ' . htmlspecialchars((string) $model->username, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . ',</p>' .
+                    '<p>Your account has been approved.</p>' .
+                    '<p><a href="' . htmlspecialchars($loginLink, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '">Login here</a></p>'
+                );
+
+            $mailer->send($email);
+            return true;
         } catch (\Throwable $exception) {
             Yii::error($exception->getMessage(), __METHOD__);
             return false;
@@ -113,18 +122,17 @@ class UserController extends BaseController
                     return $this->render('create', ['model' => $model, 'branches' => BranchCatalog::all()]);
                 }
 
-                // Admin does not set the password directly. Generate a random,
-                // unguessable password to satisfy the NOT NULL column — nobody
-                // is told this value. The user sets their own password via the
-                // emailed invite link instead.
-                $model->setPassword(Yii::$app->security->generateRandomString(32));
+                // Generate a temporary password and include it in the invite email.
+                // The user can change it after logging in with the reset link.
+                $generatedPassword = Yii::$app->security->generateRandomString(12);
+                $model->setPassword($generatedPassword);
                 $model->generateAuthKey();
 
                 if ($model->save()) {
                     AuditLogService::logAction('create-user', 'User #' . $model->id . ' created.');
 
                     if ((int) $model->status === User::STATUS_ACTIVE) {
-                        if ($this->sendAccountInviteEmail($model)) {
+                        if ($this->sendAccountInviteEmail($model, $generatedPassword)) {
                             Yii::$app->session->setFlash('success', 'User created. An invite email was sent to ' . $model->email . '.');
                         } else {
                             Yii::$app->session->setFlash('warning', 'User created, but the invite email could not be sent. Please check the mailer configuration.');
@@ -150,7 +158,7 @@ class UserController extends BaseController
     /**
      * Sends the "set your password" invite email to a newly created, active user.
      */
-    protected function sendAccountInviteEmail(User $model): bool
+    protected function sendAccountInviteEmail(User $model, ?string $generatedPassword = null): bool
     {
         try {
             $model->generatePasswordResetToken();
@@ -164,15 +172,24 @@ class UserController extends BaseController
                 'token' => $model->password_reset_token,
             ]);
 
-            return Yii::$app->mailer
-                ->compose(
-                    ['html' => 'accountInvite-html', 'text' => 'accountInvite-text'],
-                    ['user' => $model, 'setPasswordLink' => $setPasswordLink, 'appName' => Yii::$app->name],
-                )
-                ->setFrom([(string) Yii::$app->params['senderEmail'] => (string) Yii::$app->params['senderName']])
-                ->setTo($model->email)
-                ->setSubject('Your account on ' . Yii::$app->name)
-                ->send();
+            $transport = Transport::fromDsn('smtp://faridasleyman@gmail.com:vpyeoroajaxjepqz@smtp.gmail.com:587?encryption=tls&auth_mode=login');
+            $mailer = new Mailer($transport);
+
+            $emailBody =
+                '<p>Hello ' . htmlspecialchars((string) $model->username, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . ',</p>' .
+                '<p>You have been added to the system.</p>' .
+                '<p><strong>Temporary password:</strong> ' . htmlspecialchars((string) $generatedPassword, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '</p>' .
+                '<p>Please use this password and then set a new one using the link below.</p>' .
+                '<p><a href="' . htmlspecialchars($setPasswordLink, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '">Set your password</a></p>';
+
+            $email = (new Email())
+                ->from('faridasleyman@gmail.com')
+                ->to($model->email)
+                ->subject('Your account on ' . Yii::$app->name)
+                ->html($emailBody);
+
+            $mailer->send($email);
+            return true;
         } catch (\Throwable $exception) {
             Yii::error($exception->getMessage(), __METHOD__);
             return false;

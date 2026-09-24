@@ -48,6 +48,9 @@ final class ResetPasswordFormTest extends Unit
 
         $form = new ResetPasswordForm($user['password_reset_token']);
 
+        verify($form->getUser()->email)
+            ->equals($user['email']);
+
         verify($form->resetPassword())
             ->notEmpty();
     }

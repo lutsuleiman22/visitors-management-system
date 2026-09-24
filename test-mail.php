@@ -7,7 +7,7 @@ use Symfony\Component\Mailer\Transport;
 use Symfony\Component\Mime\Email;
 
 $smtpUser = 'faridasleyman@gmail.com';
-$smtpPass = 'lvvedcwxsmrxyobe';
+$smtpPass = 'vpyeoroajaxjepqz';
 
 $dsn = "smtp://$smtpUser:$smtpPass@smtp.gmail.com:587?encryption=tls&auth_mode=login";
 

@@ -3,8 +3,8 @@
 declare(strict_types=1);
 
 return [
-    'adminEmail' => 'admin@example.com',
-    'supportEmail' => 'support@example.com',
+    'adminEmail' => 'faridasleyman@gmail.com',
+    'supportEmail' => 'faridasleyman@gmail.com',
     'senderEmail' => 'faridasleyman@gmail.com',
     'senderName' => 'Visitor Management System',
     'user.passwordResetTokenExpire' => 3600,

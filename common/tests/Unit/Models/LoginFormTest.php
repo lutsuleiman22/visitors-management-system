@@ -71,4 +71,21 @@ final class LoginFormTest extends Unit
         verify(Yii::$app->user->isGuest)
             ->false();
     }
+
+    public function testLoginByEmail(): void
+    {
+        $model = new LoginForm(
+            [
+                'username' => 'nicolas.dianna@hotmail.com',
+                'password' => 'password_0',
+            ],
+        );
+
+        verify($model->login())
+            ->true();
+        verify($model->errors)
+            ->arrayHasNotKey('password');
+        verify(Yii::$app->user->isGuest)
+            ->false();
+    }
 }
