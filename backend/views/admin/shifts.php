@@ -15,7 +15,6 @@ $this->params['breadcrumbs'][] = $this->title;
         <p class="text-body-secondary mb-0">View reception shift registration history by branch.</p>
     </div>
     <?= Html::a('Back to Dashboard', ['/admin/dashboard'], ['class' => 'btn btn-warning']) ?>
-    <?= Html::a('Manage Timetables', ['/admin/timetables'], ['class' => 'btn btn-primary']) ?>
 </div>
 <div class="card border-0 shadow-sm">
     <div class="table-responsive">

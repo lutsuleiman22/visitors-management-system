@@ -50,7 +50,6 @@ CSS); ?>
                 <a class="sidebar-link" href="<?= Html::encode(Yii::$app->urlManager->createUrl(['/visit/index'])) ?>"><span class="sidebar-icon">V</span><span class="menu-text">Visitors</span></a>
                 <a class="sidebar-link" href="<?= Html::encode(Yii::$app->urlManager->createUrl(['/audit-log/index'])) ?>"><span class="sidebar-icon">A</span><span class="menu-text">Audit Logs</span></a>
                 <a class="sidebar-link" href="<?= Html::encode(Yii::$app->urlManager->createUrl(['/admin/shifts'])) ?>"><span class="sidebar-icon">S</span><span class="menu-text">Shift Registration</span></a>
-                <a class="sidebar-link" href="<?= Html::encode(Yii::$app->urlManager->createUrl(['/admin/timetables'])) ?>"><span class="sidebar-icon">T</span><span class="menu-text">Timetables</span></a>
             <?php elseif ($isReception): ?>
                 <a class="sidebar-link" href="<?= Html::encode(Yii::$app->urlManager->createUrl(['/reception/dashboard'])) ?>"><span class="sidebar-icon">D</span><span class="menu-text">Dashboard</span></a>
                 <a class="sidebar-link" href="<?= Html::encode(Yii::$app->urlManager->createUrl(['/visit/create'])) ?>"><span class="sidebar-icon">+</span><span class="menu-text">Add Visitor</span></a>
@@ -98,13 +97,15 @@ body { overflow-y: auto; }
 .backend-frame { display: flex; flex: 1 1 auto; min-height: 0; }
 .backend-sidebar { position: sticky; top: 64px; left: 0; z-index: 1500; height: calc(100vh - 64px); width: var(--backend-sidebar); display: flex; flex-direction: column; overflow-x: hidden; overflow-y: auto; padding: 1.25rem .85rem 1rem; background: linear-gradient(180deg, #10233e 0%, #143755 100%); color: #d8e0e7; transition: width .2s ease; }
 .sidebar-brand { display: flex; align-items: center; gap: .7rem; padding: .35rem .65rem 1.35rem; color: #fff; }
+.sidebar-brand > div, .sidebar-user > div:not(.sidebar-user-avatar) { min-width: 0; }
 .sidebar-brand small, .sidebar-user small { display: block; color: #a7bac9; font-size: .72rem; margin-top: .15rem; }
 .sidebar-mark { display: grid; place-items: center; width: 2.15rem; height: 2.15rem; border-radius: .65rem; background: linear-gradient(135deg, var(--bank-gold), #b7872d); color: #fff; font-size: .75rem; font-weight: 800; letter-spacing: .04em; }
 .sidebar-section-label { padding: .5rem .7rem; color: #9ab2c8; font-size: .68rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
 .sidebar-nav { display: grid; gap: .25rem; }
-.sidebar-link { display: flex; align-items: center; gap: .7rem; padding: .7rem .7rem; border-radius: .55rem; color: #dfeaf6; font-size: .9rem; text-decoration: none; transition: background .15s ease, color .15s ease; }
+.sidebar-link { display: flex; align-items: center; gap: .7rem; padding: .7rem .7rem; border-radius: .55rem; color: #dfeaf6; font-size: .9rem; text-decoration: none; transition: background .15s ease, color .15s ease; white-space: nowrap; min-width: 0; }
 .sidebar-link:hover, .sidebar-link:focus { background: rgba(255,255,255,.08); color: #fff; }
 .sidebar-icon { display: grid; place-items: center; flex: 0 0 1.55rem; height: 1.55rem; border: 1px solid rgba(255,255,255,.18); border-radius: .4rem; color: #6ee0d3; font-size: .72rem; font-weight: 800; }
+.menu-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .sidebar-user { display: flex; align-items: center; gap: .65rem; margin: 1rem .25rem 0; padding: .75rem .45rem 0; border-top: 1px solid rgba(255,255,255,.12); font-size: .82rem; }
 .sidebar-user-avatar { display: grid; place-items: center; flex: 0 0 2rem; height: 2rem; border-radius: 50%; background: linear-gradient(135deg, var(--bank-gold), #b7872d); color: #fff; font-weight: 700; }
 .backend-main { display: flex; flex: 1 1 auto; min-width: 0; min-height: 0; flex-direction: column; margin-left: 0; transition: margin-left .2s ease; position: relative; z-index: 1; }
